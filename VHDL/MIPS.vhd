@@ -4,10 +4,21 @@ USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_SIGNED.ALL;
 USE work.aux_package.ALL;
+USE work.cond_comilation_package.ALL;
 -------------- ENTITY --------------------
 ENTITY MIPS IS
-	GENERIC ( MemWidth : INTEGER := 10;
-			 SIM : BOOLEAN := TRUE);
+	GENERIC (
+		WORD_GRANULARITY : boolean  := G_WORD_GRANULARITY;
+		MODELSIM : integer          := G_MODELSIM;
+		DATA_BUS_WIDTH : integer   := 32;
+		ITCM_ADDR_WIDTH : integer  := G_ADDRWIDTH;
+		DTCM_ADDR_WIDTH : integer  := G_ADDRWIDTH;
+		PC_WIDTH : integer         := 10;
+		FUNCT_WIDTH : integer      := 6;
+		DATA_WORDS_NUM : integer   := G_DATA_WORDS_NUM;
+		CLK_CNT_WIDTH : integer    := 16;
+		INST_CNT_WIDTH : integer   := 16
+	);
 	PORT( reset, clock, ena					: IN 	STD_LOGIC; 
 		-- Output important signals to pins for easy display in Simulator
 		PC									: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
@@ -20,14 +31,16 @@ ENTITY MIPS IS
 END 	MIPS;
 ------------ ARCHITECTURE ----------------
 ARCHITECTURE structure OF MIPS IS
+	-- Local constant for simulation mode
+	constant SIM : boolean := (MODELSIM = 1);
 	---- FPGA OR ModelSim Signals ----
-	SIGNAL dMemAddr 		: STD_LOGIC_VECTOR(MemWidth-1 DOWNTO 0);
-	SIGNAL resetSim, enaSim	: STD_LOGIC;
+	SIGNAL dMemAddr : STD_LOGIC_VECTOR(DTCM_ADDR_WIDTH-1 DOWNTO 0);
+	SIGNAL resetSim, enaSim : STD_LOGIC;
 
 	-- declare signals used to connect VHDL components
 	SIGNAL PC_plus_4 		: STD_LOGIC_VECTOR( 9 DOWNTO 0 );
-	SIGNAL read_data_1 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-	SIGNAL read_data_2 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL read_data1_i 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL read_data2_i 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
 	SIGNAL Sign_Extend 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
 	SIGNAL Add_Result 		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 	SIGNAL ALU_Result 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
@@ -95,7 +108,7 @@ ARCHITECTURE structure OF MIPS IS
 	SIGNAL Sign_extend_ID				 		 				: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
 	SIGNAL Wr_reg_addr_0_ID, Wr_reg_addr_1_ID	 				: STD_LOGIC_VECTOR( 4 DOWNTO 0 );
 	SIGNAL PCBranch_addr_ID										: STD_LOGIC_VECTOR(7 DOWNTO 0);
-	SIGNAL JumpAddr_ID											: STD_LOGIC_VECTOR(7 DOWNTO 0);
+	SIGNAL JumpAddr_ID											: STD_LOGIC_VECTOR(ITCM_ADDR_WIDTH-1 DOWNTO 0);
 	
 																
 	-- Execute                                                  
@@ -133,79 +146,87 @@ BEGIN
 	
 
 	
-	
    --------------------- PORT MAP COMPONENTS --------------------------
    ----- Instruction Fetch -----
 	IFE : Ifetch
-	GENERIC MAP(MemWidth => MemWidth, SIM => SIM) 
-	PORT MAP (	Instruction		=> IR_IF,
-    	    	PC_plus_4_out 	=> PC_plus_4_IF,
-				Add_Result 		=> PCBranch_addr_ID( 7 DOWNTO 0 ), 
-				PCSrc			=> PCSrc_ID,
-				PC_out 			=> PC_BPADD,      
-				JumpAddr		=> JumpAddr_ID,
-				clock 			=> clock, 
-				ena 		    => enaSim,
-				Stall_IF	    => Stall_IF,
-				BPADD_ena		=> BPADD_ena,
-				reset 			=> resetSim );
+	GENERIC MAP(
+		DATA_BUS_WIDTH    => DATA_BUS_WIDTH,
+		PC_WIDTH          => PC_WIDTH,
+		NEXT_PC_WIDTH     => PC_WIDTH-2,
+		ITCM_ADDR_WIDTH   => ITCM_ADDR_WIDTH,
+		WORDS_NUM         => DATA_WORDS_NUM,
+		INST_CNT_WIDTH    => INST_CNT_WIDTH
+	)
+	PORT MAP (	instruction_o => IR_IF,
+    	    	pc_plus4_o => PC_plus_4_IF,
+				add_result_i => PCBranch_addr_ID( ITCM_ADDR_WIDTH-1 DOWNTO 0 ), 
+				PCSrc_i => PCSrc_ID,
+				pc_o => PC_BPADD,      
+				addr_res_o => JumpAddr_ID,
+				clk_i => clock, 
+				ena_i => enaSim,
+				Stall_IF_i => Stall_IF,
+				BPADD_ena_i => BPADD_ena,
+				rst_i => resetSim );
 	----- Instruction Decode -----
 	ID : Idecode
-   	PORT MAP (	read_data_1 	=> read_data_1_ID,
-        		read_data_2 	=> read_data_2_ID,
-				write_register_address_0 => Wr_reg_addr_0_ID,
-				write_register_address_1 => Wr_reg_addr_1_ID,
-				write_register_address   => Wr_reg_addr_WB,
-        		Instruction 	=> IR_ID,
-				PC_plus_4_shifted => PC_plus_4_ID(9 DOWNTO 2),
-				RegWrite 		=> RegWrite_WB,
-				ForwardA_ID		=> ForwardA_ID,
-				ForwardB_ID		=> ForwardB_ID,
-				BranchBeq		=> BranchBeq_ID,
-				BranchBne		=> BranchBne_ID,
-				Jump			=> Jump_ID,
-				JAL				=> Jal_ID,
-				Stall_ID	    => Stall_ID,
-				write_data		=> write_data_mux_WB,  
-				Branch_read_data_FW => ALU_Result_MEM, --Branch forwarding
-				Sign_extend 	=> Sign_extend_ID,
-				PCSrc			=> PCSrc_ID,
-				JumpAddr		=> JumpAddr_ID,
-				PCBranch_addr	=> PCBranch_addr_ID,
-        		clock 			=> clock,  
-				reset 			=> resetSim );
+   	PORT MAP (	read_data1_o => read_data_1_ID,
+        		read_data2_o => read_data_2_ID,
+				rt_register_o => Wr_reg_addr_0_ID,
+				rd_register_o => Wr_reg_addr_1_ID,
+				write_register_address => Wr_reg_addr_WB,
+        		instruction_i => IR_ID,
+				PC_plus_4_shifted_i => PC_plus_4_ID(9 DOWNTO 2),
+				RegWrite_ctrl_i => RegWrite_wb,
+				ForwardA_ID => ForwardA_ID,
+				ForwardB_ID => ForwardB_ID,
+				BranchBeq_i => BranchBeq_ID,
+				BranchBne_i => BranchBne_ID,
+				Jump_i => Jump_ID,
+				JAL_i => Jal_ID,
+				Stall_ID => Stall_ID,
+				write_data_i => write_data_mux_WB,
+				Branch_read_data_FW => ALU_Result_MEM,
+				sign_extend_o => Sign_extend_ID,
+				PCSrc_o => PCSrc_ID,
+				JumpAddr_o => JumpAddr_ID,
+				PCBranch_addr_o => PCBranch_addr_ID,
+        		clk_i => clock,  
+				rst_i => resetSim );
 	
 			
 	----- Control Unit in Instruction Decode -----
 	CTL:   control
-	PORT MAP ( 	Opcode 			=> IR_ID( 31 DOWNTO 26 ),
-                Funct			=> IR_ID( 5 DOWNTO 0 ),
-				RegDst 			=> RegDst_ID,
-				ALUSrc 			=> ALUSrc_ID,
-				MemtoReg 		=> MemtoReg_ID,
-				RegWrite 		=> RegWrite_ID,
-				MemRead 		=> MemRead_ID,
-				MemWrite 		=> MemWrite_ID,
-				BranchBeq		=> BranchBeq_ID,
-				BranchBne		=> BranchBne_ID,
-				Jump			=> Jump_ID,
-				Jal				=> Jal_ID,
-				ALUop 			=> ALUop_ID,
-                clock 			=> clock,
-				reset 			=> resetSim );
+	PORT MAP (
+		opcode_i => IR_ID(31 DOWNTO 26),
+		funct_i => IR_ID(5 DOWNTO 0),
+		RegDst_ctrl_o => RegDst_ID,
+		ALUSrc_ctrl_o => ALUSrc_ID,
+		MemtoReg_ctrl_o => MemtoReg_ID,
+		RegWrite_ctrl_o => RegWrite_ID,
+		MemRead_ctrl_o => MemRead_ID,
+		MemWrite_ctrl_o => MemWrite_ID,
+		BranchBeq_o => BranchBeq_ID,
+		BranchBne_o => BranchBne_ID,
+		Jump_o => Jump_ID,
+		Jal_o => Jal_ID,
+		ALUOp_ctrl_o => ALUOp_ID,
+		clock => clock,
+		reset => resetSim
+	);
 	----- Execute -----
 	EXE:  Execute
-   	PORT MAP (	Read_data_1 	=> read_data_1_EX,
-             	Read_data_2 	=> read_data_2_EX,
-				Sign_extend 	=> Sign_extend_EX,
-                Function_opcode	=> Sign_extend_EX( 5 DOWNTO 0 ),
-				Opcode 			=> Opcode_EX,
-				ALUOp 			=> ALUOp_EX,
-				ALUSrc 			=> ALUSrc_EX,
-				Zero 			=> Zero_EX,
-				RegDst			=> RegDst_EX,
-                ALU_Result		=> ALU_Result_EX,
-				PC_plus_4		=> PC_plus_4_EX,
+   	PORT MAP (	Read_data1_i 	=> read_data_1_EX,
+             	Read_data2_i 	=> read_data_2_EX,
+				sign_extend_i	=> sign_extend_EX,
+                funct_i			=> sign_extend_EX( 5 DOWNTO 0 ),
+				opcode_i			=> Opcode_EX,
+				ALUOp_ctrl_i	=> ALUOp_EX,
+				ALUSrc_ctrl_i	=> ALUSrc_EX,
+				zero_o			=> Zero_EX,
+				RegDst	=> RegDst_EX,
+                alu_res_o		=> ALU_Result_EX,
+				pc_plus4_i		=> PC_plus_4_EX,
 				Wr_reg_addr     => Wr_reg_addr_EX,
 				Wr_reg_addr_0   => Wr_reg_addr_0_EX,
 				Wr_reg_addr_1   => Wr_reg_addr_1_EX,
@@ -245,10 +266,10 @@ BEGIN
 	);
 		
 	----- Data Memory -----
-	ModelSim: 
-		IF (SIM = TRUE) GENERATE
-				dMemAddr <= ALU_Result_MEM (9 DOWNTO 2);
-		END GENERATE ModelSim;
+	Gen_Sim: 
+		IF (SIM) GENERATE
+				dMemAddr <=  ALU_Result_MEM(ITCM_ADDR_WIDTH+1 DOWNTO 2);
+		END GENERATE Gen_Sim;
 		
 	FPGA: 
 		IF (SIM = FALSE) GENERATE
@@ -256,24 +277,24 @@ BEGIN
 		END GENERATE FPGA;
 	
 	MEM:  dmemory
-	GENERIC MAP(MemWidth => MemWidth) 
-	PORT MAP (	read_data 		=> read_data_MEM,
-				address 		=> dMemAddr,  --jump memory address by 4
-				write_data 		=> write_data_MEM, 
-				MemRead 		=> MemRead_MEM, 
-				Memwrite 		=> MemWrite_MEM, 
-                clock 			=> clock,  
-				reset 			=> resetSim );
+	GENERIC MAP(MemWidth => DTCM_ADDR_WIDTH) 
+	PORT MAP (	dtcm_data_rd_o => read_data_MEM,
+				dtcm_addr_i => dMemAddr,  --jump memory address by 4
+				dtcm_data_wr_i => write_data_MEM, 
+				MemRead_ctrl_i => MemRead_MEM, 
+				MemWrite_ctrl_i => MemWrite_MEM, 
+                clk_i => clock,  
+				rst_i => resetSim );
 	----- Write Back -----	
 	WB:	WRITE_BACK
 	PORT MAP(	
-				ALU_Result		=> ALU_Result_WB,
-				read_data		=> read_data_WB,
-				PC_plus_4_shifted => PC_plus_4_WB(9 DOWNTO 2),
-				MemtoReg		=> MemtoReg_WB,
-				Jal				=> Jal_WB,  
-				write_data		=> write_data_WB,
-				write_data_mux	=> write_data_mux_WB
+				alu_result_i => ALU_Result_WB,
+				dtcm_data_rd_i => read_data_WB,
+				PC_plus_4_shifted_i => PC_plus_4_WB(9 DOWNTO 2),
+				MemtoReg_ctrl_i => MemtoReg_WB,
+				Jal_i => Jal_WB,  
+				write_data_o => write_data_WB,
+				write_data_mux_o => write_data_mux_WB
 	);
 	
 	---------------------------------------------------------------------------

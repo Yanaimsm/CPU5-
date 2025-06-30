@@ -8,15 +8,16 @@ USE altera_mf.altera_mf_components.all;
 ---------------- ENTITY --------------
 ENTITY dmemory IS
 	GENERIC (MemWidth	: INTEGER);
-	PORT(	read_data 			: OUT 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-        	address 			: IN 	STD_LOGIC_VECTOR( MemWidth-1 DOWNTO 0 );
-        	write_data 			: IN 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-	   		MemRead, Memwrite 	: IN 	STD_LOGIC;
-            clock,reset			: IN 	STD_LOGIC );
+	PORT(
+		dtcm_data_rd_o 			: OUT 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+        dtcm_addr_i 			: IN 	STD_LOGIC_VECTOR( MemWidth-1 DOWNTO 0 );
+        dtcm_data_wr_i 			: IN 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	    	MemRead_ctrl_i, MemWrite_ctrl_i 	: IN 	STD_LOGIC;
+        clk_i, rst_i			: IN 	STD_LOGIC );
 END dmemory;
 ------------ ARCHITECTURE -------------
 ARCHITECTURE behavior OF dmemory IS
-SIGNAL write_clock : STD_LOGIC;
+SIGNAL wrclk_w : STD_LOGIC;
 BEGIN
 	data_memory : altsyncram
 	GENERIC MAP  (
@@ -29,13 +30,13 @@ BEGIN
 		intended_device_family => "Cyclone"
 	)
 	PORT MAP (
-		wren_a => memwrite,
-		clock0 => write_clock, -- Falling Edge
-		address_a => address,
-		data_a => write_data,
-		q_a => read_data	);
+		wren_a => MemWrite_ctrl_i,
+		clock0 => wrclk_w, -- Falling Edge
+		address_a => dtcm_addr_i,
+		data_a => dtcm_data_wr_i,
+		q_a => dtcm_data_rd_o	);
 -- Load memory address register with write clock
 -- Data Memory works on falling edge
-		write_clock <= NOT clock;
+		wrclk_w <= NOT clk_i;
 END behavior;
 

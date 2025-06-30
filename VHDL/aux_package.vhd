@@ -1,71 +1,81 @@
 library IEEE;
 use ieee.std_logic_1164.all;
+use work.cond_comilation_package.all;
 
 package aux_package is
 --------------------------------------------------------
 	COMPONENT Ifetch IS
-	GENERIC (MemWidth	: INTEGER;
-			 SIM 		: BOOLEAN);
-	PORT(	Instruction						       : OUT	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-        	PC_plus_4_out 					       : OUT	STD_LOGIC_VECTOR( 9 DOWNTO 0 );
-        	Add_result 						       : IN 	STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-        	PCSrc 							       : IN 	STD_LOGIC_VECTOR( 1 DOWNTO 0 );
-      		PC_out 							       : OUT	STD_LOGIC_VECTOR( 9 DOWNTO 0 );
-			JumpAddr						       : IN	STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-        	clock, ena, Stall_IF, BPADD_ena, reset : IN 	STD_LOGIC);
+	GENERIC (
+		DATA_BUS_WIDTH	: integer := 32;
+		PC_WIDTH		: integer := 10;
+		NEXT_PC_WIDTH	: integer := 8; -- NEXT_PC_WIDTH = PC_WIDTH-2
+		ITCM_ADDR_WIDTH	: integer := G_ADDRWIDTH;
+		WORDS_NUM		: integer := G_DATA_WORDS_NUM;
+		INST_CNT_WIDTH	: integer := 16
+	);
+	PORT(	instruction_o : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+			pc_plus4_o : OUT STD_LOGIC_VECTOR(ITCM_ADDR_WIDTH-1 DOWNTO 0);--check
+			add_result_i : IN STD_LOGIC_VECTOR(ITCM_ADDR_WIDTH-1 DOWNTO 0);--check
+			PCSrc_i : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+			pc_o : OUT STD_LOGIC_VECTOR(ITCM_ADDR_WIDTH-1 DOWNTO 0);--check
+			addr_res_o : IN STD_LOGIC_VECTOR(ITCM_ADDR_WIDTH-1 DOWNTO 0);--check
+			clk_i, ena_i, Stall_IF_i, BPADD_ena_i, rst_i : IN STD_LOGIC);
 	END COMPONENT;
 
 	COMPONENT Idecode
-	PORT(	read_data_1						: OUT 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-			read_data_2						: OUT 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-			write_register_address_0 		: OUT   STD_LOGIC_VECTOR( 4 DOWNTO 0 );
-			write_register_address_1 		: OUT   STD_LOGIC_VECTOR( 4 DOWNTO 0 );
-			write_register_address      	: IN    STD_LOGIC_VECTOR( 4 DOWNTO 0 );
-			Instruction 					: IN 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-			PC_plus_4_shifted				: IN 	STD_LOGIC_VECTOR(7 DOWNTO 0);
-			RegWrite						: IN 	STD_LOGIC;
-			ForwardA_ID, ForwardB_ID		: IN 	STD_LOGIC;
-			BranchBeq, BranchBne, Jump, JAL	: IN 	STD_LOGIC; -- Added JAL
-			Stall_ID					: IN    STD_LOGIC;
-			write_data				: IN	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-			Branch_read_data_FW			: IN	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-			Sign_extend 				: OUT 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-			PCSrc		 				: OUT 	STD_LOGIC_VECTOR(1 DOWNTO 0);
-			JumpAddr					: OUT   STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-			PCBranch_addr 				: OUT 	STD_LOGIC_VECTOR(7 DOWNTO 0);
-			clock,reset					: IN 	STD_LOGIC );
+	PORT(
+		read_data1_o : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+		read_data2_o : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+		rt_register_o : OUT STD_LOGIC_VECTOR(4 DOWNTO 0);
+		rd_register_o : OUT STD_LOGIC_VECTOR(4 DOWNTO 0);
+		write_register_address : IN STD_LOGIC_VECTOR(4 DOWNTO 0);
+		instruction_i : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+		PC_plus_4_shifted_i : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+		RegWrite_ctrl_i : IN STD_LOGIC;
+		ForwardA_ID, ForwardB_ID : IN STD_LOGIC;
+		BranchBeq_i, BranchBne_i, Jump_i, JAL_i : IN STD_LOGIC;
+		Stall_ID : IN STD_LOGIC;
+		write_data_i : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+		Branch_read_data_FW : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+		sign_extend_o : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+		PCSrc_o : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+		JumpAddr_o : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+		PCBranch_addr_o : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+		clk_i, rst_i : IN STD_LOGIC
+	);
 	END COMPONENT;
 
 	COMPONENT control
-	PORT( 	
-		Opcode 							: IN 	STD_LOGIC_VECTOR(5 DOWNTO 0);
-		Funct							: IN 	STD_LOGIC_VECTOR(5 DOWNTO 0);
-		RegDst 							: OUT 	STD_LOGIC_VECTOR(1 DOWNTO 0);
-		ALUSrc 							: OUT 	STD_LOGIC;
-		MemtoReg 						: OUT 	STD_LOGIC;
-		RegWrite 						: OUT 	STD_LOGIC;
-		MemRead 						: OUT 	STD_LOGIC;
-		MemWrite 						: OUT 	STD_LOGIC;
-		BranchBeq 						: OUT 	STD_LOGIC;
-		BranchBne 						: OUT 	STD_LOGIC;
-		Jump							: OUT 	STD_LOGIC;
-		Jal								: OUT 	STD_LOGIC;
-		ALUop 							: OUT 	STD_LOGIC_VECTOR( 1 DOWNTO 0 );
-		clock, reset					: IN 	STD_LOGIC );
+	PORT(
+		opcode_i : IN STD_LOGIC_VECTOR(5 DOWNTO 0);
+		funct_i : IN STD_LOGIC_VECTOR(5 DOWNTO 0);
+		RegDst_ctrl_o : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+		ALUSrc_ctrl_o : OUT STD_LOGIC;
+		MemtoReg_ctrl_o : OUT STD_LOGIC;
+		RegWrite_ctrl_o : OUT STD_LOGIC;
+		MemRead_ctrl_o : OUT STD_LOGIC;
+		MemWrite_ctrl_o : OUT STD_LOGIC;
+		BranchBeq_o : OUT STD_LOGIC;
+		BranchBne_o : OUT STD_LOGIC;
+		Jump_o : OUT STD_LOGIC;
+		Jal_o : OUT STD_LOGIC;
+		ALUOp_ctrl_o : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+		clock, reset : IN STD_LOGIC
+	);
 	END COMPONENT;
 
 	COMPONENT  Execute
-	PORT(	Read_data_1 	: IN 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-			Read_data_2 	: IN 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-			Sign_extend 	: IN 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-			Function_opcode : IN 	STD_LOGIC_VECTOR( 5 DOWNTO 0 );
-			Opcode			: IN 	STD_LOGIC_VECTOR( 5 DOWNTO 0 );
-			ALUOp 			: IN 	STD_LOGIC_VECTOR( 1 DOWNTO 0 );
-			ALUSrc 			: IN 	STD_LOGIC;
-			Zero 			: OUT	STD_LOGIC;
-			RegDst			: IN    STD_LOGIC_VECTOR( 1 DOWNTO 0 );
-			ALU_Result 		: OUT	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-			PC_plus_4 		: IN 	STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+	PORT(	read_data1_i 	: IN 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+			read_data2_i 	: IN 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+			sign_extend_i 	: IN 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+			funct_i 			: IN 	STD_LOGIC_VECTOR( 5 DOWNTO 0 );
+			opcode_i			: IN 	STD_LOGIC_VECTOR( 5 DOWNTO 0 );
+			ALUOp_ctrl_i 	: IN 	STD_LOGIC_VECTOR( 1 DOWNTO 0 );
+			ALUSrc_ctrl_i 	: IN 	STD_LOGIC;
+			zero_o 			: OUT	STD_LOGIC;
+			RegDst	: IN    STD_LOGIC_VECTOR( 1 DOWNTO 0 );
+			alu_res_o 		: OUT	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+			pc_plus4_i 		: IN 	STD_LOGIC_VECTOR( 9 DOWNTO 0 );
 			Wr_reg_addr     : OUT   STD_LOGIC_VECTOR( 4 DOWNTO 0 );
 			Wr_reg_addr_0	: IN    STD_LOGIC_VECTOR( 4 DOWNTO 0 );
 			Wr_reg_addr_1	: IN    STD_LOGIC_VECTOR( 4 DOWNTO 0 );
@@ -79,21 +89,24 @@ package aux_package is
 
 	COMPONENT dmemory
 	GENERIC (MemWidth	: INTEGER);
-	PORT(	read_data 			: OUT 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-        	address 			: IN 	STD_LOGIC_VECTOR( MemWidth-1 DOWNTO 0 );
-        	write_data 			: IN 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-	   		MemRead, Memwrite 	: IN 	STD_LOGIC;
-            clock,reset			: IN 	STD_LOGIC );
+	PORT(
+		dtcm_data_rd_o : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+		dtcm_addr_i : IN STD_LOGIC_VECTOR(MemWidth-1 DOWNTO 0);
+		dtcm_data_wr_i : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+		MemRead_ctrl_i, MemWrite_ctrl_i : IN STD_LOGIC;
+		clk_i, rst_i : IN STD_LOGIC
+	);
 	END COMPONENT;
 	
-	COMPONENT WRITE_BACK IS
-	PORT( 
-		ALU_Result, read_data	: IN  STD_LOGIC_VECTOR(31 DOWNTO 0);
-		PC_plus_4_shifted		: IN  STD_LOGIC_VECTOR(7 DOWNTO 0);
-		MemtoReg, Jal			: IN  STD_LOGIC;
-		write_data 				: OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-		write_data_mux			: OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
-		);
+	COMPONENT WRITE_BACK
+	PORT(
+		alu_result_i : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+		dtcm_data_rd_i : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+		PC_plus_4_shifted_i : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+		MemtoReg_ctrl_i, Jal_i : IN STD_LOGIC;
+		write_data_o : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
+		write_data_mux_o : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
+	);
 	END COMPONENT;
 	
 	COMPONENT HazardUnit IS
