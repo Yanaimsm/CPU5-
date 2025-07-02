@@ -4,21 +4,10 @@ USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_SIGNED.ALL;
 USE work.aux_package.ALL;
-USE work.cond_comilation_package.ALL;
 -------------- ENTITY --------------------
 ENTITY MIPS IS
-	GENERIC (
-		WORD_GRANULARITY : boolean  := G_WORD_GRANULARITY;
-		MODELSIM : integer          := G_MODELSIM;
-		DATA_BUS_WIDTH : integer   := 32;
-		ITCM_ADDR_WIDTH : integer  := G_ADDRWIDTH;
-		DTCM_ADDR_WIDTH : integer  := G_ADDRWIDTH;
-		PC_WIDTH : integer         := 10;
-		FUNCT_WIDTH : integer      := 6;
-		DATA_WORDS_NUM : integer   := G_DATA_WORDS_NUM;
-		CLK_CNT_WIDTH : integer    := 16;
-		INST_CNT_WIDTH : integer   := 16
-	);
+	GENERIC ( MemWidth : INTEGER := 10;
+			 SIM : BOOLEAN := TRUE);
 	PORT( reset, clock, ena					: IN 	STD_LOGIC; 
 		-- Output important signals to pins for easy display in Simulator
 		PC									: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
@@ -31,11 +20,9 @@ ENTITY MIPS IS
 END 	MIPS;
 ------------ ARCHITECTURE ----------------
 ARCHITECTURE structure OF MIPS IS
-	-- Local constant for simulation mode
-	constant SIM : boolean := (MODELSIM = 1);
 	---- FPGA OR ModelSim Signals ----
-	SIGNAL dMemAddr : STD_LOGIC_VECTOR(DTCM_ADDR_WIDTH-1 DOWNTO 0);
-	SIGNAL resetSim, enaSim : STD_LOGIC;
+	SIGNAL dMemAddr 		: STD_LOGIC_VECTOR(MemWidth-1 DOWNTO 0);
+	SIGNAL resetSim, enaSim	: STD_LOGIC;
 
 	-- declare signals used to connect VHDL components
 	SIGNAL PC_plus_4 		: STD_LOGIC_VECTOR( 9 DOWNTO 0 );
@@ -108,7 +95,7 @@ ARCHITECTURE structure OF MIPS IS
 	SIGNAL Sign_extend_ID				 		 				: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
 	SIGNAL Wr_reg_addr_0_ID, Wr_reg_addr_1_ID	 				: STD_LOGIC_VECTOR( 4 DOWNTO 0 );
 	SIGNAL PCBranch_addr_ID										: STD_LOGIC_VECTOR(7 DOWNTO 0);
-	SIGNAL JumpAddr_ID											: STD_LOGIC_VECTOR(ITCM_ADDR_WIDTH-1 DOWNTO 0);
+	SIGNAL JumpAddr_ID											: STD_LOGIC_VECTOR(7 DOWNTO 0);
 	
 																
 	-- Execute                                                  
@@ -146,20 +133,14 @@ BEGIN
 	
 
 	
+	
    --------------------- PORT MAP COMPONENTS --------------------------
    ----- Instruction Fetch -----
 	IFE : Ifetch
-	GENERIC MAP(
-		DATA_BUS_WIDTH    => DATA_BUS_WIDTH,
-		PC_WIDTH          => PC_WIDTH,
-		NEXT_PC_WIDTH     => PC_WIDTH-2,
-		ITCM_ADDR_WIDTH   => ITCM_ADDR_WIDTH,
-		WORDS_NUM         => DATA_WORDS_NUM,
-		INST_CNT_WIDTH    => INST_CNT_WIDTH
-	)
+	GENERIC MAP(MemWidth => MemWidth, SIM => SIM) 
 	PORT MAP (	instruction_o => IR_IF,
     	    	pc_plus4_o => PC_plus_4_IF,
-				add_result_i => PCBranch_addr_ID( ITCM_ADDR_WIDTH-1 DOWNTO 0 ), 
+				add_result_i => PCBranch_addr_ID( 7 DOWNTO 0 ), 
 				PCSrc_i => PCSrc_ID,
 				pc_o => PC_BPADD,      
 				addr_res_o => JumpAddr_ID,
@@ -266,10 +247,10 @@ BEGIN
 	);
 		
 	----- Data Memory -----
-	Gen_Sim: 
-		IF (SIM) GENERATE
-				dMemAddr <=  ALU_Result_MEM(ITCM_ADDR_WIDTH+1 DOWNTO 2);
-		END GENERATE Gen_Sim;
+	ModelSim: 
+		IF (SIM = TRUE) GENERATE
+				dMemAddr <= ALU_Result_MEM (9 DOWNTO 2);
+		END GENERATE ModelSim;
 		
 	FPGA: 
 		IF (SIM = FALSE) GENERATE
@@ -277,7 +258,7 @@ BEGIN
 		END GENERATE FPGA;
 	
 	MEM:  dmemory
-	GENERIC MAP(MemWidth => DTCM_ADDR_WIDTH) 
+	GENERIC MAP(MemWidth => MemWidth) 
 	PORT MAP (	dtcm_data_rd_o => read_data_MEM,
 				dtcm_addr_i => dMemAddr,  --jump memory address by 4
 				dtcm_data_wr_i => write_data_MEM, 

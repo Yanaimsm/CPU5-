@@ -1,24 +1,25 @@
 library IEEE;
 use ieee.std_logic_1164.all;
-use work.cond_comilation_package.all;
 
 package aux_package is
 --------------------------------------------------------
 	COMPONENT Ifetch IS
 	GENERIC (
+		MemWidth		: INTEGER;
+		SIM				: BOOLEAN;
 		DATA_BUS_WIDTH	: integer := 32;
 		PC_WIDTH		: integer := 10;
 		NEXT_PC_WIDTH	: integer := 8; -- NEXT_PC_WIDTH = PC_WIDTH-2
-		ITCM_ADDR_WIDTH	: integer := G_ADDRWIDTH;
-		WORDS_NUM		: integer := G_DATA_WORDS_NUM;
+		ITCM_ADDR_WIDTH	: integer := 8;
+		WORDS_NUM		: integer := 256;
 		INST_CNT_WIDTH	: integer := 16
 	);
 	PORT(	instruction_o : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
-			pc_plus4_o : OUT STD_LOGIC_VECTOR(ITCM_ADDR_WIDTH-1 DOWNTO 0);--check
-			add_result_i : IN STD_LOGIC_VECTOR(ITCM_ADDR_WIDTH-1 DOWNTO 0);--check
+			pc_plus4_o : OUT STD_LOGIC_VECTOR(9 DOWNTO 0);
+			add_result_i : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
 			PCSrc_i : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
-			pc_o : OUT STD_LOGIC_VECTOR(ITCM_ADDR_WIDTH-1 DOWNTO 0);--check
-			addr_res_o : IN STD_LOGIC_VECTOR(ITCM_ADDR_WIDTH-1 DOWNTO 0);--check
+			pc_o : OUT STD_LOGIC_VECTOR(9 DOWNTO 0);
+			addr_res_o : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
 			clk_i, ena_i, Stall_IF_i, BPADD_ena_i, rst_i : IN STD_LOGIC);
 	END COMPONENT;
 

@@ -8,10 +8,10 @@
 --
 
 
-ENTITY MIPS_tb IS
+ENTITY a_mips_tb IS
 -- Declarations
 
-END MIPS_tb ;
+END a_mips_tb ;
 
 --
 -- VHDL Architecture MIPS.MIPS_tb.struct
@@ -29,7 +29,7 @@ USE work.aux_package.ALL;
 
 LIBRARY work;
 
-ARCHITECTURE struct OF MIPS_tb IS
+ARCHITECTURE struct OF a_mips_tb IS
 
    -- Architecture declarations
 
