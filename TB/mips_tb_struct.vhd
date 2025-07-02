@@ -112,7 +112,7 @@ BEGIN
    U_0 : MIPS
 	  GENERIC MAP (
 		 MemWidth => 8,
-		 SIM => TRUE ) 
+		 SIM => FALSE ) 
       PORT MAP (
          rst_i           => reset,
          clk_i           => clock,
