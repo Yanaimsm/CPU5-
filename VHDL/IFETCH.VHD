@@ -97,7 +97,7 @@ inst_memory: altsyncram
 		if rst_i = '1' then
 			inst_cnt_q	<=	(others	=> '0');
 		elsif rising_edge(clk_i) then
-			if next_pc_w = pc_q( 9 DOWNTO 2 ) then
+			if (ena_i = '1' AND Stall_IF_i = '0' AND BPADD_ena_i = '0') then
 				inst_cnt_q	<=	inst_cnt_q + '1';
 			end if;
 		end if;

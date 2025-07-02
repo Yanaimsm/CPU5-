@@ -8,7 +8,7 @@ USE work.aux_package.ALL;
 -------------- ENTITY --------------------
 ENTITY MIPS IS
 	GENERIC ( MemWidth : INTEGER := 10;
-			 SIM : BOOLEAN := FALSE);
+			 SIM : BOOLEAN := TRUE);
 	PORT( rst_i, clk_i, ena					: IN 	STD_LOGIC;
 		BPADD								: IN  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 		-- Output important signals to pins for easy display in Simulator
