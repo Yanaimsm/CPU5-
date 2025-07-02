@@ -3,11 +3,10 @@ LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE work.const_package.all;
 ----------------- ENTITY ----------------
 ENTITY Idecode IS
-	generic(
-		DATA_BUS_WIDTH : integer := 32
-	);
+
 	PORT(	read_data1_o						: OUT 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 			read_data2_o						: OUT 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 			rt_register_o						: OUT 	STD_LOGIC_VECTOR(4 DOWNTO 0);
@@ -32,7 +31,7 @@ ARCHITECTURE behavior OF Idecode IS
 TYPE register_file IS ARRAY ( 0 TO 31 ) OF STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 	SIGNAL RF_q : register_file;
 	SIGNAL write_reg_addr_w 	: STD_LOGIC_VECTOR( 4 DOWNTO 0 );
-	SIGNAL write_reg_data_w		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL write_reg_data_w		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL rs_register_w : STD_LOGIC_VECTOR(4 DOWNTO 0);
 	SIGNAL rt_register_w : STD_LOGIC_VECTOR(4 DOWNTO 0);
 	SIGNAL rd_register_w : STD_LOGIC_VECTOR(4 DOWNTO 0);

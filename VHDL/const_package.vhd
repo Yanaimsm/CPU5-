@@ -65,6 +65,9 @@ package const_package is
 	constant ALU_NOP :		STD_LOGIC_VECTOR(3 DOWNTO 0) := "1111";	-- No Operation (default)
 	
 
+	constant DATA_BUS_WIDTH	: integer := 32;
+
+
 
 
 

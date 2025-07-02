@@ -5,13 +5,14 @@ USE IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_SIGNED.ALL;
 LIBRARY altera_mf;
 USE altera_mf.altera_mf_components.all;
+USE work.const_package.all;
 ---------------- ENTITY --------------
 ENTITY dmemory IS
 	GENERIC (MemWidth	: INTEGER);
 	PORT(
-		dtcm_data_rd_o 			: OUT 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+		dtcm_data_rd_o 			: OUT 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
         dtcm_addr_i 			: IN 	STD_LOGIC_VECTOR( MemWidth-1 DOWNTO 0 );
-        dtcm_data_wr_i 			: IN 	STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+        dtcm_data_wr_i 			: IN 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	    	MemRead_ctrl_i, MemWrite_ctrl_i 	: IN 	STD_LOGIC;
         clk_i, rst_i			: IN 	STD_LOGIC );
 END dmemory;

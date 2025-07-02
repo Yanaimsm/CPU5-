@@ -26,7 +26,7 @@ LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 USE work.aux_package.ALL;
-
+use work.const_package.all;
 LIBRARY work;
 
 ARCHITECTURE struct OF a_mips_tb IS
@@ -34,18 +34,18 @@ ARCHITECTURE struct OF a_mips_tb IS
    -- Architecture declarations
 
    -- Internal signal declarations
-   SIGNAL ALU_result_out  : STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+   SIGNAL ALU_result_out  : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
    SIGNAL Branch_out      : STD_LOGIC;
-   SIGNAL Instruction_out : STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+   SIGNAL Instruction_out : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
    SIGNAL Memwrite_out    : STD_LOGIC;
    SIGNAL PC              : STD_LOGIC_VECTOR( 9 DOWNTO 0 );
    SIGNAL Regwrite_out    : STD_LOGIC;
    SIGNAL Zero_out        : STD_LOGIC;
    SIGNAL clock           : STD_LOGIC;
-   SIGNAL read_data_1_out : STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-   SIGNAL read_data_2_out : STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+   SIGNAL read_data_1_out : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+   SIGNAL read_data_2_out : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
    SIGNAL reset           : STD_LOGIC;
-   SIGNAL write_data_out  : STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+   SIGNAL write_data_out  : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
    SIGNAL CLKCNT		  : STD_LOGIC_VECTOR(15 DOWNTO 0);
    SIGNAL STCNT		 	  : STD_LOGIC_VECTOR(7 DOWNTO 0);
    SIGNAL FHCNT			  : STD_LOGIC_VECTOR(7 DOWNTO 0);
@@ -71,16 +71,16 @@ ARCHITECTURE struct OF a_mips_tb IS
 	END 	COMPONENT;
    COMPONENT MIPS_tester
    PORT (
-      ALU_result_out  : IN     STD_LOGIC_VECTOR ( 31 DOWNTO 0 );
+      ALU_result_out  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       Branch_out      : IN     STD_LOGIC ;
-      Instruction_out : IN     STD_LOGIC_VECTOR ( 31 DOWNTO 0 );
+      Instruction_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       Memwrite_out    : IN     STD_LOGIC ;
       PC              : IN     STD_LOGIC_VECTOR ( 9 DOWNTO 0 );
       Regwrite_out    : IN     STD_LOGIC ;
       Zero_out        : IN     STD_LOGIC ;
-      read_data_1_out : IN     STD_LOGIC_VECTOR ( 31 DOWNTO 0 );
-      read_data_2_out : IN     STD_LOGIC_VECTOR ( 31 DOWNTO 0 );
-      write_data_out  : IN     STD_LOGIC_VECTOR ( 31 DOWNTO 0 );
+      read_data_1_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      read_data_2_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      write_data_out  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       clock           : OUT    STD_LOGIC ;
 	  ena			  : OUT    STD_LOGIC;
       reset           : OUT    STD_LOGIC 
@@ -105,13 +105,13 @@ BEGIN
       PORT MAP (
          reset           => reset,
          clock           => clock,
-		 ena			 => ena,
+		   ena			    => ena,
          PC              => PC,
-         CLKCNT  		 => CLKCNT,
+         CLKCNT  		    => CLKCNT,
          STCNT 			 => STCNT,
          FHCNT 			 => FHCNT,
          BPADD 			 => BPADD,
-		 ST_trigger      => ST_trigger
+		 ST_trigger        => ST_trigger
       );
    U_1 : MIPS_tester
       PORT MAP (
@@ -126,7 +126,7 @@ BEGIN
          read_data_2_out => read_data_2_out,
          write_data_out  => write_data_out,
          clock           => clock,
-		 ena			 => ena,
+		   ena			    => ena,
          reset           => reset
       );
 

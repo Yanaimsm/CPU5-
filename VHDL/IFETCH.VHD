@@ -3,6 +3,7 @@ LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE work.const_package.all;
 LIBRARY altera_mf;
 USE altera_mf.altera_mf_components.all;
 ---------------- ENTITY ------------------
@@ -10,7 +11,6 @@ ENTITY Ifetch IS
 	GENERIC (
 		MemWidth		: INTEGER;
 		SIM				: BOOLEAN;
-		DATA_BUS_WIDTH	: integer := 32;
 		PC_WIDTH		: integer := 10;
 		NEXT_PC_WIDTH	: integer := 8; -- NEXT_PC_WIDTH = PC_WIDTH-2
 		ITCM_ADDR_WIDTH	: integer := 8;

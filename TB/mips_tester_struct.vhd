@@ -9,21 +9,22 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
+USE work.const_package.all;
 
 ENTITY MIPS_tester IS
    PORT( 
-      ALU_result_out  : IN     STD_LOGIC_VECTOR ( 31 DOWNTO 0 );
+      ALU_result_out  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       Branch_out      : IN     STD_LOGIC;
-      Instruction_out : IN     STD_LOGIC_VECTOR ( 31 DOWNTO 0 );
+      Instruction_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       Memwrite_out    : IN     STD_LOGIC;
       PC              : IN     STD_LOGIC_VECTOR ( 9 DOWNTO 0 );
       Regwrite_out    : IN     STD_LOGIC;
       Zero_out        : IN     STD_LOGIC;
-      read_data_1_out : IN     STD_LOGIC_VECTOR ( 31 DOWNTO 0 );
-      read_data_2_out : IN     STD_LOGIC_VECTOR ( 31 DOWNTO 0 );
-      write_data_out  : IN     STD_LOGIC_VECTOR ( 31 DOWNTO 0 );
+      read_data_1_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      read_data_2_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      write_data_out  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       clock           : OUT    STD_LOGIC;
-	  ena			  : OUT    STD_LOGIC;
+	  ena			       : OUT    STD_LOGIC;
       reset           : OUT    STD_LOGIC
    );
 

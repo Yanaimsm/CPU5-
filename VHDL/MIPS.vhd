@@ -3,6 +3,7 @@ LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_SIGNED.ALL;
+use work.const_package.all;
 USE work.aux_package.ALL;
 -------------- ENTITY --------------------
 ENTITY MIPS IS
@@ -26,12 +27,12 @@ ARCHITECTURE structure OF MIPS IS
 
 	-- declare signals used to connect VHDL components
 	SIGNAL PC_plus_4 		: STD_LOGIC_VECTOR( 9 DOWNTO 0 );
-	SIGNAL read_data1_i 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-	SIGNAL read_data2_i 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-	SIGNAL Sign_Extend 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL read_data1_i 		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL read_data2_i 		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL Sign_Extend 		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL Add_Result 		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-	SIGNAL ALU_Result 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-	SIGNAL read_data 		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL ALU_Result 		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL read_data 		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL ALUSrc 			: STD_LOGIC;
 	SIGNAL RegDst 			: STD_LOGIC;
 	SIGNAL Regwrite 		: STD_LOGIC;
@@ -40,7 +41,7 @@ ARCHITECTURE structure OF MIPS IS
 	SIGNAL MemtoReg 		: STD_LOGIC;
 	SIGNAL MemRead 			: STD_LOGIC;
 	SIGNAL ALUop 			: STD_LOGIC_VECTOR(  1 DOWNTO 0 );
-	SIGNAL Instruction		: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL Instruction		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 -------------- Signals To support CPI/IPC calculation and break point debug ability --------------------------------
 	--SIGNAL CLKCNT_sig		: STD_LOGIC_VECTOR( 15 DOWNTO 0 );
 	--SIGNAL STCNT_sig		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
@@ -86,13 +87,13 @@ ARCHITECTURE structure OF MIPS IS
 	-------- States Registers ------
 	-- Instruction Fetch
 	SIGNAL PC_plus_4_IF		: STD_LOGIC_VECTOR(9 DOWNTO 0);
-	SIGNAL IR_IF		    : STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL IR_IF		    : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 
 	-- Instruction Decode
 	SIGNAL PC_plus_4_ID				     		 				: STD_LOGIC_VECTOR(9 DOWNTO 0);
-	SIGNAL IR_ID		    			  		 				: STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-	SIGNAL read_data_1_ID, read_data_2_ID 		 				: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-	SIGNAL Sign_extend_ID				 		 				: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL IR_ID		    			  		 				: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 ); 
+	SIGNAL read_data_1_ID, read_data_2_ID 		 				: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL Sign_extend_ID				 		 				: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL Wr_reg_addr_0_ID, Wr_reg_addr_1_ID	 				: STD_LOGIC_VECTOR( 4 DOWNTO 0 );
 	SIGNAL PCBranch_addr_ID										: STD_LOGIC_VECTOR(7 DOWNTO 0);
 	SIGNAL JumpAddr_ID											: STD_LOGIC_VECTOR(7 DOWNTO 0);
@@ -100,30 +101,30 @@ ARCHITECTURE structure OF MIPS IS
 																
 	-- Execute                                                  
 	SIGNAL PC_plus_4_EX				      						: STD_LOGIC_VECTOR(9 DOWNTO 0);
-	SIGNAL IR_EX		    			  		 				: STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-	SIGNAL read_data_1_EX, read_data_2_EX 						: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-	SIGNAL Sign_extend_EX				  		 				: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL IR_EX		    			  		 				: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 ); 
+	SIGNAL read_data_1_EX, read_data_2_EX 						: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL Sign_extend_EX				  		 				: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL Wr_reg_addr_0_EX, Wr_reg_addr_1_EX, Wr_reg_addr_EX	: STD_LOGIC_VECTOR( 4 DOWNTO 0 );
-	SIGNAL write_data_EX										: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL write_data_EX										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL Add_Result_EX										: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-	SIGNAL ALU_Result_EX					   				    : STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL ALU_Result_EX					   				    : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL Opcode_EX											: STD_LOGIC_VECTOR( 5 DOWNTO 0 );
 																
 	-- Memory     
 	SIGNAL PC_plus_4_MEM			      						: STD_LOGIC_VECTOR(9 DOWNTO 0);	
 	SIGNAL Add_Result_MEM										: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-	SIGNAL ALU_Result_MEM										: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-	SIGNAL write_data_MEM, read_data_MEM						: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL ALU_Result_MEM										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL write_data_MEM, read_data_MEM						: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL Wr_reg_addr_MEM										: STD_LOGIC_VECTOR( 4 DOWNTO 0 );									    
-	SIGNAL JumpAddr_MEM											: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL JumpAddr_MEM											: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	
 	-- WriteBack
 	SIGNAL PC_plus_4_WB				      						: STD_LOGIC_VECTOR(9 DOWNTO 0);
-	SIGNAL read_data_WB											: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-	SIGNAL ALU_Result_WB										: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL read_data_WB											: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL ALU_Result_WB										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL Wr_reg_addr_WB										: STD_LOGIC_VECTOR( 4 DOWNTO 0 ); 
-	SIGNAL write_data_WB										: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-	SIGNAL write_data_mux_WB									: STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+	SIGNAL write_data_WB										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL write_data_mux_WB									: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	------------------------------------------------------
 
 BEGIN

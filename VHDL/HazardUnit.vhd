@@ -4,6 +4,7 @@ USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 use ieee.numeric_std.all;
 USE work.aux_package.ALL;
+USE work.const_package.ALL;
 -------------- ENTITY --------------------
 ENTITY HazardUnit IS
 	PORT( 
