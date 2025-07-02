@@ -46,12 +46,12 @@ ARCHITECTURE struct OF a_mips_tb IS
    SIGNAL read_data_2_out : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
    SIGNAL reset           : STD_LOGIC;
    SIGNAL write_data_out  : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-   SIGNAL CLKCNT		  : STD_LOGIC_VECTOR(15 DOWNTO 0);
+   SIGNAL CLKCNT		     : STD_LOGIC_VECTOR(15 DOWNTO 0);
    SIGNAL STCNT		 	  : STD_LOGIC_VECTOR(7 DOWNTO 0);
    SIGNAL FHCNT			  : STD_LOGIC_VECTOR(7 DOWNTO 0);
    SIGNAL BPADD			  : STD_LOGIC_VECTOR(7 DOWNTO 0);
-   SIGNAL ST_trigger	  : STD_LOGIC;
-   SIGNAL ena			  : STD_LOGIC;
+   SIGNAL ST_trigger	     : STD_LOGIC;
+   SIGNAL ena			     : STD_LOGIC;
    
 
 
@@ -59,14 +59,25 @@ ARCHITECTURE struct OF a_mips_tb IS
    COMPONENT MIPS
 	GENERIC ( MemWidth : INTEGER := 10;
 			 SIM : BOOLEAN := FALSE);
-	PORT( reset, clock, ena					: IN 	STD_LOGIC; 
+	PORT( rst_i, clk_i, ena		: IN  STD_LOGIC; 
+      BPADD						: IN  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 		-- Output important signals to pins for easy display in Simulator
-		PC									: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
-		CLKCNT								: OUT  STD_LOGIC_VECTOR( 15 DOWNTO 0 );
-		STCNT								: OUT  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-		FHCNT								: OUT  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-		BPADD								: IN  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-		ST_trigger							: OUT  STD_LOGIC
+		PC							: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+		CLKCNT_o					: OUT  STD_LOGIC_VECTOR( 15 DOWNTO 0 );
+		STCNT_o						: OUT  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
+		FHCNT_o						: OUT  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
+		STRIGGER_o					: OUT  STD_LOGIC;
+		INSTCNT_o					: OUT  STD_LOGIC_VECTOR( 15 DOWNTO 0 );
+		IFpc_0						: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+		IFinstruction_o				: OUT  STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+		IDpc_0						: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+		IDinstruction_o				: OUT  STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+		EXpc_0						: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+		EXinstruction_o				: OUT  STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+		MEMpc_0						: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+		MEMinstruction_o				: OUT  STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+		WBpc_0						: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+		WBinstruction_o				: OUT  STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 )
 		);
 	END 	COMPONENT;
    COMPONENT MIPS_tester
@@ -82,7 +93,7 @@ ARCHITECTURE struct OF a_mips_tb IS
       read_data_2_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       write_data_out  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       clock           : OUT    STD_LOGIC ;
-	  ena			  : OUT    STD_LOGIC;
+	  ena			       : OUT    STD_LOGIC;
       reset           : OUT    STD_LOGIC 
    );
    END COMPONENT;
@@ -103,15 +114,15 @@ BEGIN
 		 MemWidth => 8,
 		 SIM => TRUE ) 
       PORT MAP (
-         reset           => reset,
-         clock           => clock,
-		   ena			    => ena,
+         rst_i           => reset,
+         clk_i           => clock,
+         ena             => ena,
          PC              => PC,
-         CLKCNT  		    => CLKCNT,
-         STCNT 			 => STCNT,
-         FHCNT 			 => FHCNT,
+         CLKCNT_o  		    => CLKCNT,
+         STCNT_o 			 => STCNT,
+         FHCNT_o 			 => FHCNT,
          BPADD 			 => BPADD,
-		 ST_trigger        => ST_trigger
+		 STRIGGER_o        => ST_trigger
       );
    U_1 : MIPS_tester
       PORT MAP (

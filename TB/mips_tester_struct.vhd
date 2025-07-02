@@ -24,7 +24,7 @@ ENTITY MIPS_tester IS
       read_data_2_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       write_data_out  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       clock           : OUT    STD_LOGIC;
-	  ena			       : OUT    STD_LOGIC;
+	   ena			    : OUT    STD_LOGIC;
       reset           : OUT    STD_LOGIC
    );
 

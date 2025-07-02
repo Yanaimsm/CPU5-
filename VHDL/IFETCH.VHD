@@ -24,7 +24,8 @@ ENTITY Ifetch IS
 		PCSrc_i					: IN  STD_LOGIC_VECTOR( 1 DOWNTO 0 );
 		pc_o					: OUT STD_LOGIC_VECTOR( 9 DOWNTO 0 );
 		addr_res_o				: IN  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-		clk_i, ena_i, Stall_IF_i, BPADD_ena_i, rst_i : IN  STD_LOGIC
+		clk_i, ena_i, Stall_IF_i, BPADD_ena_i, rst_i : IN  STD_LOGIC;
+		inst_cnt_o 		: OUT	STD_LOGIC_VECTOR(INST_CNT_WIDTH-1 DOWNTO 0)	
 	);
 END Ifetch;
 --------------- ARCHITECTURE --------------
@@ -33,6 +34,7 @@ ARCHITECTURE behavior OF Ifetch IS
 	SIGNAL next_pc_w : STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 	SIGNAL itcm_addr_w : STD_LOGIC_VECTOR( MemWidth-1 DOWNTO 0 );
 	SIGNAL ifetch_clock : STD_LOGIC;  --new signal name we made for falling edge
+	SIGNAL inst_cnt_q 			: STD_LOGIC_VECTOR(INST_CNT_WIDTH-1 DOWNTO 0);
 BEGIN
 --------------- ROM for Instruction Memory --------------- 
 inst_memory: altsyncram
@@ -89,6 +91,18 @@ inst_memory: altsyncram
 			   pc_q( 9 DOWNTO 2 ) <= next_pc_w;
 		END IF;
 	END PROCESS;
+
+	process (clk_i , rst_i)
+	begin
+		if rst_i = '1' then
+			inst_cnt_q	<=	(others	=> '0');
+		elsif rising_edge(clk_i) then
+			if next_pc_w = pc_q( 9 DOWNTO 2 ) then
+				inst_cnt_q	<=	inst_cnt_q + '1';
+			end if;
+		end if;
+	end process;
+	inst_cnt_o <= inst_cnt_q;
 END behavior;
 
 

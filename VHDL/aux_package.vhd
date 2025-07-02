@@ -20,7 +20,9 @@ package aux_package is
 			PCSrc_i : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
 			pc_o : OUT STD_LOGIC_VECTOR(9 DOWNTO 0);
 			addr_res_o : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
-			clk_i, ena_i, Stall_IF_i, BPADD_ena_i, rst_i : IN STD_LOGIC);
+			clk_i, ena_i, Stall_IF_i, BPADD_ena_i, rst_i : IN STD_LOGIC;
+			inst_cnt_o 		: OUT	STD_LOGIC_VECTOR(INST_CNT_WIDTH-1 DOWNTO 0)	
+		);
 	END COMPONENT;
 
 	COMPONENT Idecode
@@ -84,8 +86,8 @@ package aux_package is
 			Wr_data_FW_MEM	: IN 	STD_LOGIC_VECTOR( DATA_BUS_WIDTH-1 DOWNTO 0 );
 			ForwardA 		: IN 	STD_LOGIC_VECTOR(1 DOWNTO 0);		
 			ForwardB		: IN 	STD_LOGIC_VECTOR(1 DOWNTO 0);	
-			WriteData_EX    : OUT   STD_LOGIC_VECTOR( DATA_BUS_WIDTH-1 DOWNTO 0 );
-			clock, reset	: IN 	STD_LOGIC );
+			WriteData_EX    : OUT   STD_LOGIC_VECTOR( DATA_BUS_WIDTH-1 DOWNTO 0 )
+			);
 	END COMPONENT;
 
 	COMPONENT dmemory
@@ -123,7 +125,19 @@ package aux_package is
 		ForwardA_Branch, ForwardB_Branch		     : OUT STD_LOGIC
 		);
 	END 	COMPONENT;
+
+	COMPONENT PLL
+	PORT
+	(
+		areset		: IN STD_LOGIC  := '0';
+		inclk0		: IN STD_LOGIC  := '0';
+		c0		: OUT STD_LOGIC ;
+		locked		: OUT STD_LOGIC 
+	);
+	END COMPONENT;
 -----------------------------------------------------------------------------------
 
 end aux_package;
+
+
 

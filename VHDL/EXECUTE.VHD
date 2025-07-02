@@ -31,8 +31,8 @@ ENTITY  Execute IS
 			Wr_data_FW_MEM	: IN 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 			ForwardA 		: IN 	STD_LOGIC_VECTOR(1 DOWNTO 0);		
 			ForwardB		: IN 	STD_LOGIC_VECTOR(1 DOWNTO 0);
-			WriteData_EX    : OUT   STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
-			clock, reset	: IN 	STD_LOGIC );
+			WriteData_EX    : OUT   STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0)
+			);
 END Execute;
 ------------ Architecture -----------------
 ARCHITECTURE behavior OF Execute IS

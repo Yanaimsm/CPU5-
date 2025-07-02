@@ -9,14 +9,25 @@ USE work.aux_package.ALL;
 ENTITY MIPS IS
 	GENERIC ( MemWidth : INTEGER := 10;
 			 SIM : BOOLEAN := TRUE);
-	PORT( reset, clock, ena					: IN 	STD_LOGIC; 
+	PORT( rst_i, clk_i, ena					: IN 	STD_LOGIC;
+		BPADD								: IN  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 		-- Output important signals to pins for easy display in Simulator
 		PC									: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
-		CLKCNT								: OUT  STD_LOGIC_VECTOR( 15 DOWNTO 0 );
-		STCNT								: OUT  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-		FHCNT								: OUT  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-		BPADD								: IN  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-		ST_trigger							: OUT  STD_LOGIC
+		CLKCNT_o							: OUT  STD_LOGIC_VECTOR( 15 DOWNTO 0 );
+		STCNT_o								: OUT  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
+		FHCNT_o								: OUT  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
+		STRIGGER_o							: OUT  STD_LOGIC;
+		INSTCNT_o							: OUT  STD_LOGIC_VECTOR( 15 DOWNTO 0 );
+		IFpc_0								: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+		IFinstruction_o						: OUT  STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+		IDpc_0								: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+		IDinstruction_o						: OUT  STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+		EXpc_0								: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+		EXinstruction_o						: OUT  STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+		MEMpc_0								: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+		MEMinstruction_o					: OUT  STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+		WBpc_0								: OUT  STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+		WBinstruction_o						: OUT  STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 )
 		);
 END 	MIPS;
 ------------ ARCHITECTURE ----------------
@@ -24,6 +35,7 @@ ARCHITECTURE structure OF MIPS IS
 	---- FPGA OR ModelSim Signals ----
 	SIGNAL dMemAddr 		: STD_LOGIC_VECTOR(MemWidth-1 DOWNTO 0);
 	SIGNAL resetSim, enaSim	: STD_LOGIC;
+	SIGNAL MCLK_w 			: STD_LOGIC;
 
 	-- declare signals used to connect VHDL components
 	SIGNAL PC_plus_4 		: STD_LOGIC_VECTOR( 9 DOWNTO 0 );
@@ -88,6 +100,7 @@ ARCHITECTURE structure OF MIPS IS
 	-- Instruction Fetch
 	SIGNAL PC_plus_4_IF		: STD_LOGIC_VECTOR(9 DOWNTO 0);
 	SIGNAL IR_IF		    : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL inst_cnt_w		: STD_LOGIC_VECTOR(15 DOWNTO 0);
 
 	-- Instruction Decode
 	SIGNAL PC_plus_4_ID				     		 				: STD_LOGIC_VECTOR(9 DOWNTO 0);
@@ -129,12 +142,19 @@ ARCHITECTURE structure OF MIPS IS
 
 BEGIN
 	-------------------------- FPGA or ModelSim -----------------------
-	resetSim 	<= reset WHEN SIM ELSE not reset;
+	resetSim 	<= rst_i WHEN SIM ELSE not rst_i;
 	enaSim		<= ena 	 WHEN SIM ELSE not ena;
-	
 
-	
-	
+	G0:
+	if (not SIM) generate
+	  MCLK: PLL
+		PORT MAP (
+			inclk0 	=> clk_i,
+			c0 		=> MCLK_w
+		);
+	else generate
+		MCLK_w <= clk_i;
+	end generate;
    --------------------- PORT MAP COMPONENTS --------------------------
    ----- Instruction Fetch -----
 	IFE : Ifetch
@@ -145,10 +165,11 @@ BEGIN
 				PCSrc_i => PCSrc_ID,
 				pc_o => PC_BPADD,      
 				addr_res_o => JumpAddr_ID,
-				clk_i => clock, 
+				clk_i => MCLK_w, 
 				ena_i => enaSim,
 				Stall_IF_i => Stall_IF,
 				BPADD_ena_i => BPADD_ena,
+				inst_cnt_o => inst_cnt_w,
 				rst_i => resetSim );
 	----- Instruction Decode -----
 	ID : Idecode
@@ -173,7 +194,7 @@ BEGIN
 				PCSrc_o => PCSrc_ID,
 				JumpAddr_o => JumpAddr_ID,
 				PCBranch_addr_o => PCBranch_addr_ID,
-        		clk_i => clock,  
+        		clk_i => MCLK_w,  
 				rst_i => resetSim );
 	
 			
@@ -193,7 +214,7 @@ BEGIN
 		Jump_o => Jump_ID,
 		Jal_o => Jal_ID,
 		ALUOp_ctrl_o => ALUOp_ID,
-		clock => clock,
+		clock => MCLK_w,
 		reset => resetSim
 	);
 	----- Execute -----
@@ -216,9 +237,8 @@ BEGIN
 				Wr_data_FW_MEM	=> ALU_Result_MEM, -- For Forwarding
 				ForwardA		=> ForwardA,
 				ForwardB		=> ForwardB,
-				WriteData_EX    => write_data_EX,
-                Clock			=> clock,
-				Reset			=> resetSim );
+				WriteData_EX    => write_data_EX
+				);
 				
 	----- Hazard Unit (Stalls AND Flushs AND Forwarding) -----
 	Hazard:	HazardUnit
@@ -265,7 +285,7 @@ BEGIN
 				dtcm_data_wr_i => write_data_MEM, 
 				MemRead_ctrl_i => MemRead_MEM, 
 				MemWrite_ctrl_i => MemWrite_MEM, 
-                clk_i => clock,  
+                clk_i => MCLK_w,  
 				rst_i => resetSim );
 	----- Write Back -----	
 	WB:	WRITE_BACK
@@ -283,9 +303,9 @@ BEGIN
 	------- PROCESS TO COUNT Clocks, Stalls, Flushs --------
 	PC		 	<= PC_BPADD;
 	BPADD_ena 	<= '1' WHEN (NOT SIM AND BPADD = PC_BPADD(9 DOWNTO 2) AND BPADD /= X"00") ELSE '0';
-	ST_trigger 	<= BPADD_ena;
+	STRIGGER_o 	<= BPADD_ena;
 	
-	PROCESS (clock, resetSim, enaSim, Run, BPADD_ena, Flush_EX, Stall_ID, Stall_IF) 
+	PROCESS (MCLK_w, resetSim, enaSim, Run, BPADD_ena, Flush_EX, Stall_ID, Stall_IF) 
 		VARIABLE CLKCNT_sig		: STD_LOGIC_VECTOR( 15 DOWNTO 0 );
 		VARIABLE STCNT_sig		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 		VARIABLE FHCNT_sig		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
@@ -295,7 +315,7 @@ BEGIN
 			STCNT_sig 	:= X"00";
 			FHCNT_sig 	:= X"00";
 			Run			<= '0';
-		ELSIF (rising_edge(clock) and Run = '1' and BPADD_ena = '0') THEN 	-- count clk counts on rising edge
+		ELSIF (rising_edge(MCLK_w) and Run = '1' and BPADD_ena = '0') THEN 	-- count clk counts on rising edge
 			CLKCNT_sig := CLKCNT_sig + 1;
 			IF (Stall_ID OR Stall_IF) = '1' THEN 	-- count on rising edge when stall occurs
 				STCNT_sig := STCNT_sig + 1;
@@ -311,9 +331,9 @@ BEGIN
 			Run			<= '1';
 		END IF;
 		------------- Signals To support CPI/IPC calculation -------------
-		CLKCNT 		<= CLKCNT_sig;
-		STCNT		<= STCNT_sig;
-		FHCNT		<= FHCNT_sig;
+		CLKCNT_o 		<= CLKCNT_sig;
+		STCNT_o		<= STCNT_sig;
+		FHCNT_o		<= FHCNT_sig;
 	END PROCESS;
 
 
@@ -321,7 +341,7 @@ BEGIN
 
 	----------------------- Connect Pipeline Registers ------------------------
 	PROCESS BEGIN
-		WAIT UNTIL clock'EVENT AND clock = '1';
+		WAIT UNTIL MCLK_w'EVENT AND MCLK_w = '1';
 		IF  (Run = '1' AND BPADD_ena = '0') THEN
 			-------------- Instruction Fetch TO Instruction Decode ---------------- 
 			IF Stall_ID = '0' THEN 
@@ -416,5 +436,16 @@ BEGIN
 		
 	END PROCESS;		
 	---------------------------------------------------------------------------
+	INSTCNT_o <= inst_cnt_w;
+	IFpc_0 <= PC_plus_4_IF-4;
+	IFinstruction_o <= IR_IF;
+	IDpc_0 <= PC_plus_4_ID-4;
+	IDinstruction_o <= IR_ID;
+	EXpc_0 <= PC_plus_4_EX-4;
+	EXinstruction_o <= IR_EX;
+	MEMpc_0 <= PC_plus_4_MEM-4;
+	MEMinstruction_o <= IR_EX;
+	WBpc_0 <= PC_plus_4_WB-4;
+	WBinstruction_o <= IR_EX;
 END structure;
 
