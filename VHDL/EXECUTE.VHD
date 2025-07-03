@@ -117,9 +117,8 @@ END PROCESS;
 ------------ Generate Zero Flag ----------------------------
 	zero_o <= '1' WHEN ( alu_out_mux_w(DATA_BUS_WIDTH-1 DOWNTO 0) = X"00000000"  ) ELSE	
 			'0';    
-------------- Select ALU output  ----------------------------      
-	alu_res_o <= 	X"0000000" & B"000"  & alu_out_mux_w(DATA_BUS_WIDTH-1) WHEN  alu_ctl_w = ALU_SLT ELSE  -- For SLT
-					alu_out_mux_w(DATA_BUS_WIDTH-1 DOWNTO 0);
+-- ------------- Select ALU output  ----------------------------      
+ 	alu_res_o <= alu_out_mux_w(DATA_BUS_WIDTH-1 DOWNTO 0);
 		
 ------------ Adder to compute Branch Address ----------------
 --	Branch_Add	<= PC_plus_4( 9 DOWNTO 2 ) +  Sign_extend( 7 DOWNTO 0 ) ;
