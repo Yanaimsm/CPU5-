@@ -24,7 +24,7 @@ ENTITY control IS
 END control;
 ------------ Architecture -----------------
 ARCHITECTURE behavior OF control IS
-	SIGNAL  rtype_w, itype_imm_w, lw_w, sw_w, beq_w, Bne_w, Addi_w, Ori_w, Xori_w, Andi_w, Shift_w, Lui_w, Slti_w, JalSignal_w	: STD_LOGIC;
+	SIGNAL  rtype_w, itype_imm_w, lw_w, sw_w, beq_w, Bne_w, Addi_w, Ori_w, Xori_w, Andi_w, Shift_w, Lui_w, Slti_w, JalSignal_w : STD_LOGIC;
 	-- Add Relvant Signals Later if needed
 BEGIN           
 ------- Code to generate control signals using opcode bits -------------
@@ -46,7 +46,7 @@ BEGIN
 	Shift_w		<=  '1' WHEN opcode_i = "000000" AND (funct_i = "000000" OR funct_i = "000010") ELSE '0';
 
 	-- EXEC -- 
-	itype_imm_w <= Addi_w OR Andi_w OR Ori_w OR Xori_w OR Lui_w OR Shift_w;
+	itype_imm_w <= Addi_w OR Andi_w OR Ori_w OR Xori_w OR Lui_w OR Shift_w or Slti_w;
 	RegDst_ctrl_o(1)	<= JalSignal_w; -- jal
 	RegDst_ctrl_o(0)  	<= rtype_w;
 	ALUSrc_ctrl_o   	<= lw_w OR sw_w OR itype_imm_w;

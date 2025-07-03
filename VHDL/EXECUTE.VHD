@@ -93,7 +93,7 @@ BEGIN
 				WHEN ORI_OPC => alu_ctl_w <= ALU_OR; -- ori
 				WHEN XORI_OPC => alu_ctl_w <= ALU_XOR; -- xori
 				WHEN LUI_OPC => alu_ctl_w <= ALU_LUI; -- lui
-				WHEN SLTI_OPC => alu_ctl_w <= ALU_SLT; -- slti
+				WHEN SLTI_OPC => alu_ctl_w <= ALU_SLTI; -- slti
 		        WHEN OTHERS   => alu_ctl_w <= ALU_NOP; -- else
 			END CASE;			
 		WHEN "01" 	=> -- beq, bne
@@ -143,17 +143,23 @@ BEGIN
 		-- ALU performs ALUresult = A_input XOR B_input
  	 	WHEN ALU_XOR 	=>	alu_out_mux_w 	<= a_input_w XOR b_input_w;
 		-- ALU performs ALUresult = A_input SLL B_input
- 	 	WHEN ALU_SLL 	=>	alu_out_mux_w 	<=	std_logic_vector(shift_left(ieee.numeric_std.unsigned(a_input_w),to_integer(ieee.numeric_std.unsigned(b_input_w(FUNCT_WIDTH-1 downto 0)))));
+ 	 	WHEN ALU_SLL 	=>	alu_out_mux_w 	<=	std_logic_vector(shift_left(ieee.numeric_std.unsigned(a_input_w),to_integer(ieee.numeric_std.unsigned(b_input_w(10 downto 6)))));
 
 		-- ALU performs ALUresult = A_input SRL B_input
- 	 	WHEN ALU_SRL 	=>	alu_out_mux_w 	<=	std_logic_vector(shift_right(ieee.numeric_std.unsigned(a_input_w),to_integer(ieee.numeric_std.unsigned(b_input_w(FUNCT_WIDTH-1 downto 0))))); 
+ 	 	WHEN ALU_SRL 	=>	alu_out_mux_w 	<=	std_logic_vector(shift_right(ieee.numeric_std.unsigned(a_input_w),to_integer(ieee.numeric_std.unsigned(b_input_w(10 downto 6))))); 
 
 		-- ALU performs ALUresult = A_input -B_input
  	 	WHEN ALU_SUB 	=>	alu_out_mux_w 	<= a_input_w - b_input_w; 
 		-- ALU performs SLT
-  	 	WHEN ALU_SLT 	=>	alu_out_mux_w 	<= a_input_w - b_input_w;  
+		WHEN ALU_SLT  => 
+			alu_out_mux_w <= (others => '0');
+			alu_out_mux_w(0) <= '1' WHEN (ieee.numeric_std.signed(a_input_w) < ieee.numeric_std.signed(b_input_w)) ELSE '0'; 
+		-- ALU performs SLTi
+		WHEN ALU_SLTI => 
+			alu_out_mux_w <= (others => '0');
+			alu_out_mux_w(0) <= '1' WHEN (ieee.numeric_std.signed(a_input_w) < ieee.numeric_std.signed(b_input_w)) ELSE '0'; 
 		-- ALU performs LUI
-  	 	WHEN ALU_LUI 	=>	alu_out_mux_w 	<= b_input_w(DATA_BUS_WIDTH-1 DOWNTO 0)(DATA_BUS_WIDTH-1 DOWNTO 0);
+  	 	WHEN ALU_LUI => alu_out_mux_w <= b_input_w(15 downto 0) & X"0000";
 		-- OUTPUT ZERO
  	 	WHEN OTHERS	=>	alu_out_mux_w 	<= X"00000000" ;
   	END CASE;

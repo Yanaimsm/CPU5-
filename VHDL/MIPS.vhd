@@ -53,7 +53,7 @@ ARCHITECTURE structure OF MIPS IS
 	SIGNAL MemtoReg 		: STD_LOGIC;
 	SIGNAL MemRead 			: STD_LOGIC;
 	SIGNAL ALUop 			: STD_LOGIC_VECTOR(  1 DOWNTO 0 );
-	SIGNAL Instruction		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+
 -------------- Signals To support CPI/IPC calculation and break point debug ability --------------------------------
 	--SIGNAL CLKCNT_sig		: STD_LOGIC_VECTOR( 15 DOWNTO 0 );
 	--SIGNAL STCNT_sig		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );

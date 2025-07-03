@@ -63,6 +63,7 @@ package const_package is
 	constant ALU_SRL :		STD_LOGIC_VECTOR(3 DOWNTO 0) := "1000";	-- Shift Right Logical
 	constant ALU_LUI :		STD_LOGIC_VECTOR(3 DOWNTO 0) := "1001";	-- Load Upper Immediate
 	constant ALU_NOP :		STD_LOGIC_VECTOR(3 DOWNTO 0) := "1111";	-- No Operation (default)
+	constant ALU_SLTI :		STD_LOGIC_VECTOR(3 DOWNTO 0) := "1010";	-- Set Less Than Immediate
 	
 
 	constant DATA_BUS_WIDTH	: integer := 32;
