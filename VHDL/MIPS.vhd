@@ -55,10 +55,9 @@ ARCHITECTURE structure OF MIPS IS
 	SIGNAL Branch_EX, Branch_ID 					: STD_LOGIC;
 	SIGNAL MemWrite_MEM, MemWrite_EX, MemWrite_ID 	: STD_LOGIC;
 	SIGNAL MemRead_MEM, MemRead_EX, MemRead_ID 		: STD_LOGIC;
-	--SIGNAL PCSrc_MEM								: STD_LOGIC_VECTOR(1 DOWNTO 0);
-	SIGNAL  BranchBeq_EX, BranchBeq_ID: STD_LOGIC;
-	SIGNAL BranchBne_EX, BranchBne_ID: STD_LOGIC;
-	SIGNAL Jump_EX, Jump_ID				: STD_LOGIC;
+	SIGNAL  BranchBeq_EX, BranchBeq_ID				: STD_LOGIC;
+	SIGNAL BranchBne_EX, BranchBne_ID				: STD_LOGIC;
+	SIGNAL Jump_EX, Jump_ID							: STD_LOGIC;
 	
 	-- Forwarding Unit
 	SIGNAL ForwardA, ForwardB						: STD_LOGIC_VECTOR(1 DOWNTO 0);
@@ -100,17 +99,14 @@ ARCHITECTURE structure OF MIPS IS
 	SIGNAL Sign_extend_EX				  		 				: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL Wr_reg_addr_0_EX, Wr_reg_addr_1_EX, Wr_reg_addr_EX	: STD_LOGIC_VECTOR( 4 DOWNTO 0 );
 	SIGNAL write_data_EX										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL Add_Result_EX										: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 	SIGNAL ALU_Result_EX					   				    : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL Opcode_EX											: STD_LOGIC_VECTOR( 5 DOWNTO 0 );
 																
 	-- Memory     
 	SIGNAL PC_plus_4_MEM			      						: STD_LOGIC_VECTOR(9 DOWNTO 0);	
-	SIGNAL Add_Result_MEM										: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 	SIGNAL ALU_Result_MEM										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL write_data_MEM, read_data_MEM						: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL Wr_reg_addr_MEM										: STD_LOGIC_VECTOR( 4 DOWNTO 0 );									    
-	SIGNAL JumpAddr_MEM											: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	
 	-- WriteBack
 	SIGNAL PC_plus_4_WB				      						: STD_LOGIC_VECTOR(9 DOWNTO 0);
@@ -393,7 +389,7 @@ BEGIN
 			Jal_MEM			<= Jal_EX;
 			----- State Reg -----
 			PC_plus_4_MEM	<= PC_plus_4_EX;
-			Add_Result_MEM  <= Add_Result_EX;
+	
 			ALU_Result_MEM  <= ALU_Result_EX;
 			write_data_MEM	<= write_data_EX;   -- was read_data_2_EX
 			Wr_reg_addr_MEM	<= Wr_reg_addr_EX;
