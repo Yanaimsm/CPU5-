@@ -12,6 +12,7 @@ USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 USE work.aux_package.ALL;
 use work.const_package.all;
+use work.cond_comilation_package.all;
 LIBRARY work;
 
 ARCHITECTURE struct OF a_mips_tb IS

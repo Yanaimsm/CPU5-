@@ -8,7 +8,7 @@ USE work.aux_package.ALL;
 -------------- ENTITY --------------------
 ENTITY MIPS IS
 	GENERIC ( MemWidth : INTEGER := 10;
-			 SIM : BOOLEAN := TRUE);
+			 SIM : BOOLEAN := FALSE);
 	PORT( rst_i, clk_i, ena					: IN 	STD_LOGIC;
 		BPADD								: IN  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 		-- Output important signals to pins for easy display in Simulator
@@ -37,27 +37,8 @@ ARCHITECTURE structure OF MIPS IS
 	SIGNAL resetSim, enaSim	: STD_LOGIC;
 	SIGNAL MCLK_w 			: STD_LOGIC;
 
-	-- declare signals used to connect VHDL components
-	SIGNAL PC_plus_4 		: STD_LOGIC_VECTOR( 9 DOWNTO 0 );
-	SIGNAL read_data1_i 		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL read_data2_i 		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL Sign_Extend 		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL Add_Result 		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-	SIGNAL ALU_Result 		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL read_data 		: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL ALUSrc 			: STD_LOGIC;
-	SIGNAL RegDst 			: STD_LOGIC;
-	SIGNAL Regwrite 		: STD_LOGIC;
-	SIGNAL Zero 			: STD_LOGIC;
-	SIGNAL MemWrite 		: STD_LOGIC;
-	SIGNAL MemtoReg 		: STD_LOGIC;
-	SIGNAL MemRead 			: STD_LOGIC;
-	SIGNAL ALUop 			: STD_LOGIC_VECTOR(  1 DOWNTO 0 );
-
 -------------- Signals To support CPI/IPC calculation and break point debug ability --------------------------------
-	--SIGNAL CLKCNT_sig		: STD_LOGIC_VECTOR( 15 DOWNTO 0 );
-	--SIGNAL STCNT_sig		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
-	--SIGNAL FHCNT_sig		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
+
 	SIGNAL BPADD_ena		: STD_LOGIC;
 	SIGNAL Run				: STD_LOGIC;
 	SIGNAL PC_BPADD			: STD_LOGIC_VECTOR( 9 DOWNTO 0 );
@@ -70,14 +51,14 @@ ARCHITECTURE structure OF MIPS IS
 	SIGNAL Jal_WB, Jal_MEM, Jal_EX, Jal_ID						: STD_LOGIC;
 	
 	-- MEM --
-	SIGNAL Zero_MEM, Zero_EX 						: STD_LOGIC;
-	SIGNAL Branch_MEM, Branch_EX, Branch_ID 		: STD_LOGIC;
+	SIGNAL Zero_EX			 						: STD_LOGIC;
+	SIGNAL Branch_EX, Branch_ID 					: STD_LOGIC;
 	SIGNAL MemWrite_MEM, MemWrite_EX, MemWrite_ID 	: STD_LOGIC;
 	SIGNAL MemRead_MEM, MemRead_EX, MemRead_ID 		: STD_LOGIC;
 	--SIGNAL PCSrc_MEM								: STD_LOGIC_VECTOR(1 DOWNTO 0);
-	SIGNAL BranchBeq_MEM, BranchBeq_EX, BranchBeq_ID: STD_LOGIC;
-	SIGNAL BranchBne_MEM, BranchBne_EX, BranchBne_ID: STD_LOGIC;
-	SIGNAL Jump_MEM, Jump_EX, Jump_ID				: STD_LOGIC;
+	SIGNAL  BranchBeq_EX, BranchBeq_ID: STD_LOGIC;
+	SIGNAL BranchBne_EX, BranchBne_ID: STD_LOGIC;
+	SIGNAL Jump_EX, Jump_ID				: STD_LOGIC;
 	
 	-- Forwarding Unit
 	SIGNAL ForwardA, ForwardB						: STD_LOGIC_VECTOR(1 DOWNTO 0);
@@ -223,18 +204,18 @@ BEGIN
              	Read_data2_i 	=> read_data_2_EX,
 				sign_extend_i	=> sign_extend_EX,
                 funct_i			=> sign_extend_EX( 5 DOWNTO 0 ),
-				opcode_i			=> Opcode_EX,
+				opcode_i		=> Opcode_EX,
 				ALUOp_ctrl_i	=> ALUOp_EX,
 				ALUSrc_ctrl_i	=> ALUSrc_EX,
 				zero_o			=> Zero_EX,
-				RegDst	=> RegDst_EX,
+				RegDst			=> RegDst_EX,
                 alu_res_o		=> ALU_Result_EX,
 				pc_plus4_i		=> PC_plus_4_EX,
 				Wr_reg_addr     => Wr_reg_addr_EX,
 				Wr_reg_addr_0   => Wr_reg_addr_0_EX,
 				Wr_reg_addr_1   => Wr_reg_addr_1_EX,
-				Wr_data_FW_WB	=> write_data_WB,  -- For Forwarding
-				Wr_data_FW_MEM	=> ALU_Result_MEM, -- For Forwarding
+				Wr_data_FW_WB	=> write_data_WB,  
+				Wr_data_FW_MEM	=> ALU_Result_MEM, 
 				ForwardA		=> ForwardA,
 				ForwardB		=> ForwardB,
 				WriteData_EX    => write_data_EX
@@ -403,15 +384,12 @@ BEGIN
 			
 			-------------------------- Execute TO Memory --------------------------- 
 			----- Control Reg -----
-			Branch_MEM		<= Branch_EX;
-			Zero_MEM		<= Zero_EX;
 			MemtoReg_MEM    <= MemtoReg_EX;
 			RegWrite_MEM    <= RegWrite_EX;
 			MemWrite_MEM    <= MemWrite_EX;
 			MemRead_MEM	    <= MemRead_EX;	
-			BranchBeq_MEM	<= BranchBeq_EX;
-			BranchBne_MEM	<= BranchBne_EX;
-			Jump_MEM		<= Jump_EX;
+			
+
 			Jal_MEM			<= Jal_EX;
 			----- State Reg -----
 			PC_plus_4_MEM	<= PC_plus_4_EX;
