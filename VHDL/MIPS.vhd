@@ -67,38 +67,40 @@ ARCHITECTURE structure OF MIPS IS
 	SIGNAL ID_PCBranch_addr_w 									: STD_LOGIC_VECTOR(7 DOWNTO 0);
 	SIGNAL ID_JumpAddr_w     									: STD_LOGIC_VECTOR(7 DOWNTO 0);
 	SIGNAL ID_PCSrc_w        									: STD_LOGIC_VECTOR(1 DOWNTO 0);
-																
+	SIGNAL ID_ALUOp_w											: STD_LOGIC_VECTOR(1 DOWNTO 0);			
+	SIGNAL ID_ALUSrc_w, ID_MemtoReg_w, ID_RegWrite_w, ID_jal_w	: STD_LOGIC;
+	SIGNAL ID_Branch_w, ID_MemWrite_w, ID_BranchBeq_w			: STD_LOGIC;
+	SIGNAL ID_BranchBne_w, ID_Jump_w,ID_MemRead_w				: STD_LOGIC;
+	SIGNAL ID_RegDst_w											: STD_LOGIC_VECTOR(1 DOWNTO 0);
 	-- Execute                                            
-	SIGNAL EX_RegDst_w, ID_RegDst_w 							: STD_LOGIC_VECTOR(1 DOWNTO 0);
-	SIGNAL EX_ALUSrc_w, ID_ALUSrc_w 							: STD_LOGIC;
-	SIGNAL EX_ALUOp_w, ID_ALUOp_w 								: STD_LOGIC_VECTOR(1 DOWNTO 0);      
-	SIGNAL PC_plus_4_EX				      						: STD_LOGIC_VECTOR(9 DOWNTO 0);
-	SIGNAL IR_EX		    			  		 				: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 ); 
-	SIGNAL read_data_1_EX, read_data_2_EX 						: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL Sign_extend_EX				  		 				: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL Wr_reg_addr_0_EX, Wr_reg_addr_1_EX, Wr_reg_addr_EX	: STD_LOGIC_VECTOR( 4 DOWNTO 0 );
-	SIGNAL write_data_EX										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL ALU_Result_EX					   				    : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL Opcode_EX											: STD_LOGIC_VECTOR( 5 DOWNTO 0 );
+	SIGNAL EX_ALUOp_w			 								: STD_LOGIC_VECTOR(1 DOWNTO 0);      
+	SIGNAL EX_ALUSrc_w, EX_Zero_w, EX_Branch_w, EX_MemWrite_w	: STD_LOGIC;
+	SIGNAL EX_MemRead_w, EX_BranchBeq_w,EX_BranchBne_w			: STD_LOGIC;
+	SIGNAL EX_Jump_w, EX_jal_w, EX_MemtoReg_w,EX_RegWrite_w		: STD_LOGIC;
+	SIGNAL EX_RegDst_w 											: STD_LOGIC_VECTOR(1 DOWNTO 0);
+	SIGNAL EX_PC_plus_4_w				      					: STD_LOGIC_VECTOR(9 DOWNTO 0);
+	SIGNAL EX_IR_w		    			  		 				: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 ); 
+	SIGNAL EX_read_data_1_w, EX_read_data_2_w 					: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL EX_Sign_extend_w				  		 				: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL EX_Wr_reg_addr_0_w, EX_Wr_reg_addr_1_w				: STD_LOGIC_VECTOR(4 DOWNTO 0);
+	SIGNAL EX_Wr_reg_addr_w 									: STD_LOGIC_VECTOR(4 DOWNTO 0);
+	SIGNAL EX_write_data_w 										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
+	SIGNAL EX_ALU_Result_w 										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
+	SIGNAL EX_Opcode_w 											: STD_LOGIC_VECTOR(5 DOWNTO 0);
 																
 	-- Memory     
-	SIGNAL EX_Zero_w			 								: STD_LOGIC;
-	SIGNAL EX_Branch_w, ID_Branch_w 							: STD_LOGIC;
-	SIGNAL MEM_MemWrite_w, EX_MemWrite_w, ID_MemWrite_w 		: STD_LOGIC;
-	SIGNAL MEM_MemRead_w, EX_MemRead_w, ID_MemRead_w 			: STD_LOGIC;
-	SIGNAL  EX_BranchBeq_w, ID_BranchBeq_w						: STD_LOGIC;
-	SIGNAL EX_BranchBne_w, ID_BranchBne_w						: STD_LOGIC;
-	SIGNAL EX_Jump_w, ID_Jump_w									: STD_LOGIC;
-	SIGNAL PC_plus_4_MEM			      						: STD_LOGIC_VECTOR(9 DOWNTO 0);	
-	SIGNAL ALU_Result_MEM										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL write_data_MEM, read_data_MEM						: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL Wr_reg_addr_MEM										: STD_LOGIC_VECTOR( 4 DOWNTO 0 );	
+	
+	SIGNAL MEM_MemWrite_w 										: STD_LOGIC;
+	SIGNAL MEM_MemRead_w, MEM_jal_w 							: STD_LOGIC;
+	SIGNAL MEM_MemtoReg_w, MEM_RegWrite_w						: STD_LOGIC;
+	SIGNAL MEM_PC_plus_4_w 										: STD_LOGIC_VECTOR(9 DOWNTO 0);
+	SIGNAL MEM_ALU_Result_w 									: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
+	SIGNAL MEM_write_data_w, MEM_read_data_w 					: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
+	SIGNAL MEM_Wr_reg_addr_w 									: STD_LOGIC_VECTOR(4 DOWNTO 0);
 
 	
 	-- WriteBack
-	SIGNAL WB_MemtoReg_w, MEM_MemtoReg_w, EX_MemtoReg_w, ID_MemtoReg_w 	: STD_LOGIC;
-	SIGNAL WB_RegWrite_w, MEM_RegWrite_w, EX_RegWrite_w, ID_RegWrite_w 	: STD_LOGIC;
-	SIGNAL WB_jal_w, MEM_jal_w, EX_jal_w, ID_jal_w						: STD_LOGIC;
+	SIGNAL WB_MemtoReg_w, WB_RegWrite_w, WB_jal_w   			: STD_LOGIC;
 	SIGNAL PC_plus_4_WB				      						: STD_LOGIC_VECTOR(9 DOWNTO 0);
 	SIGNAL read_data_WB											: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	SIGNAL ALU_Result_WB										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
@@ -156,7 +158,7 @@ BEGIN
 				JAL_i => ID_jal_w,
 				Stall_ID => IDStall_w,
 				write_data_i => write_data_mux_WB,
-				Branch_read_data_FW => ALU_Result_MEM,
+				Branch_read_data_FW => MEM_ALU_Result_w,
 				sign_extend_o => ID_Sign_extend_w,
 				PCSrc_o => ID_PCSrc_w,
 				JumpAddr_o => ID_JumpAddr_w,
@@ -186,25 +188,25 @@ BEGIN
 	);
 	----- Execute -----
 	EXE:  Execute
-   	PORT MAP (	Read_data1_i 	=> read_data_1_EX,
-             	Read_data2_i 	=> read_data_2_EX,
-				sign_extend_i	=> sign_extend_EX,
-                funct_i			=> sign_extend_EX( 5 DOWNTO 0 ),
-				opcode_i		=> Opcode_EX,
+   	PORT MAP (	Read_data1_i 	=> EX_read_data_1_w,
+             	Read_data2_i 	=> EX_read_data_2_w,
+				sign_extend_i	=> EX_Sign_extend_w,
+                funct_i			=> EX_Sign_extend_w( 5 DOWNTO 0 ),
+				opcode_i		=> EX_Opcode_w,
 				ALUOp_ctrl_i	=> EX_ALUOp_w,
 				ALUSrc_ctrl_i	=> EX_ALUSrc_w,
 				zero_o			=> EX_Zero_w,
 				RegDst			=> EX_RegDst_w,
-                alu_res_o		=> ALU_Result_EX,
-				pc_plus4_i		=> PC_plus_4_EX,
-				Wr_reg_addr     => Wr_reg_addr_EX,
-				Wr_reg_addr_0   => Wr_reg_addr_0_EX,
-				Wr_reg_addr_1   => Wr_reg_addr_1_EX,
+                alu_res_o		=> EX_ALU_Result_w,
+				pc_plus4_i		=> EX_PC_plus_4_w,
+				Wr_reg_addr     => EX_Wr_reg_addr_w,
+				Wr_reg_addr_0   => EX_Wr_reg_addr_0_w,
+				Wr_reg_addr_1   => EX_Wr_reg_addr_1_w,
 				Wr_data_FW_WB	=> write_data_WB,  
-				Wr_data_FW_MEM	=> ALU_Result_MEM, 
+				Wr_data_FW_MEM	=> MEM_ALU_Result_w, 
 				ForwardA		=> ForwardA_w,
 				ForwardB		=> ForwardB_w,
-				WriteData_EX    => write_data_EX
+				WriteData_EX    => EX_write_data_w
 				);
 				
 	----- Hazard Unit (Stalls AND Flushs AND Forwarding) -----
@@ -212,11 +214,11 @@ BEGIN
 	PORT MAP(	
 				MemtoReg_EX		=> EX_MemtoReg_w,	
 				MemtoReg_MEM	=> MEM_MemtoReg_w,
-				WriteReg_EX		=> Wr_reg_addr_EX,
-				WriteReg_MEM   	=> Wr_reg_addr_MEM,
+				WriteReg_EX		=> EX_Wr_reg_addr_w,
+				WriteReg_MEM   	=> MEM_Wr_reg_addr_w,
 				WriteReg_WB		=> Wr_reg_addr_WB,
-				RegRs_EX		=> IR_EX(25 DOWNTO 21),
-				RegRt_EX 		=> IR_EX(20 DOWNTO 16),
+				RegRs_EX		=> EX_IR_w(25 DOWNTO 21),
+				RegRt_EX 		=> EX_IR_w(20 DOWNTO 16),
 				RegRs_ID		=> ID_IR_w(25 DOWNTO 21),
 				RegRt_ID 		=> ID_IR_w(20 DOWNTO 16),
 				EX_RegWr		=> EX_RegWrite_w,
@@ -237,19 +239,19 @@ BEGIN
 	----- Data Memory -----
 	ModelSim: 
 		IF (SIM = TRUE) GENERATE
-				dMemAddr_w <= ALU_Result_MEM (9 DOWNTO 2);
+				dMemAddr_w <= MEM_ALU_Result_w (9 DOWNTO 2);
 		END GENERATE ModelSim;
 		
 	FPGA: 
 		IF (SIM = FALSE) GENERATE
-				dMemAddr_w <= ALU_Result_MEM (9 DOWNTO 2) & "00";
+				dMemAddr_w <= MEM_ALU_Result_w (9 DOWNTO 2) & "00";
 		END GENERATE FPGA;
 	
 	MEM:  dmemory
 	GENERIC MAP(MemWidth => MemWidth) 
-	PORT MAP (	dtcm_data_rd_o => read_data_MEM,
+	PORT MAP (	dtcm_data_rd_o => MEM_read_data_w,
 				dtcm_addr_i => dMemAddr_w,  --jump memory address by 4
-				dtcm_data_wr_i => write_data_MEM, 
+				dtcm_data_wr_i => MEM_write_data_w, 
 				MemRead_ctrl_i => MEM_MemRead_w, 
 				MemWrite_ctrl_i => MEM_MemWrite_w, 
                 clk_i => MCLK_w,  
@@ -330,19 +332,19 @@ BEGIN
 				EX_RegDst_w 	     <= "00";  
 				EX_ALUSrc_w	     <= '0';
 				EX_ALUOp_w 	     <= "00";
-				Opcode_EX		 <= "000000";
+				EX_Opcode_w		 <= "000000";
 				EX_BranchBeq_w	 <= '0';
 				EX_BranchBne_w	 <= '0';
 				EX_Jump_w			 <= '0';
 				EX_jal_w			 <= '0';   
 				----- State Reg -----
-				PC_plus_4_EX     <= "0000000000";
-				IR_EX			 <= X"00000000";
-				read_data_1_EX   <= X"00000000";
-				read_data_2_EX   <= X"00000000";
-				Sign_extend_EX   <= X"00000000";
-				Wr_reg_addr_0_EX <= "00000";
-				Wr_reg_addr_1_EX <= "00000";
+				EX_PC_plus_4_w     <= "0000000000";
+				EX_IR_w			 <= X"00000000";
+				EX_read_data_1_w   <= X"00000000";
+				EX_read_data_2_w   <= X"00000000";
+				EX_Sign_extend_w   <= X"00000000";
+				EX_Wr_reg_addr_0_w <= "00000";
+				EX_Wr_reg_addr_1_w <= "00000";
 			ELSE 
 				----- Control Reg -----
 				EX_Branch_w 	     <= ID_Branch_w;
@@ -353,19 +355,19 @@ BEGIN
 				EX_RegDst_w 	     <= ID_RegDst_w;
 				EX_ALUSrc_w	     <= ID_ALUSrc_w;
 				EX_ALUOp_w 	     <= ID_ALUOp_w;
-				Opcode_EX		 <= ID_IR_w(31 DOWNTO 26);
+				EX_Opcode_w		 <= ID_IR_w(31 DOWNTO 26);
 				EX_BranchBeq_w	 <= ID_BranchBeq_w;
 				EX_BranchBne_w	 <= ID_BranchBne_w;
 				EX_Jump_w			 <= ID_Jump_w;
 				EX_jal_w			 <= ID_jal_w;   
 				----- State Reg -----
-				PC_plus_4_EX     <= ID_PC_plus_4_w;	
-				IR_EX			 <= ID_IR_w;
-				read_data_1_EX   <= ID_read_data_1_w;  -- rs
-				read_data_2_EX   <= ID_read_data_2_w;	 -- rt
-				Sign_extend_EX   <= ID_Sign_extend_w;
-				Wr_reg_addr_0_EX <= ID_Wr_reg_addr_0_w;
-				Wr_reg_addr_1_EX <= ID_Wr_reg_addr_1_w;
+				EX_PC_plus_4_w     <= ID_PC_plus_4_w;	
+				EX_IR_w			 <= ID_IR_w;
+				EX_read_data_1_w   <= ID_read_data_1_w;  -- rs
+				EX_read_data_2_w   <= ID_read_data_2_w;	 -- rt
+				EX_Sign_extend_w   <= ID_Sign_extend_w;
+				EX_Wr_reg_addr_0_w <= ID_Wr_reg_addr_0_w;
+				EX_Wr_reg_addr_1_w <= ID_Wr_reg_addr_1_w;
 			END IF;
 			
 			-------------------------- Execute TO Memory --------------------------- 
@@ -378,11 +380,11 @@ BEGIN
 
 			MEM_jal_w			<= EX_jal_w;
 			----- State Reg -----
-			PC_plus_4_MEM	<= PC_plus_4_EX;
+			MEM_PC_plus_4_w	<= EX_PC_plus_4_w;
 	
-			ALU_Result_MEM  <= ALU_Result_EX;
-			write_data_MEM	<= write_data_EX;   -- was read_data_2_EX
-			Wr_reg_addr_MEM	<= Wr_reg_addr_EX;
+			MEM_ALU_Result_w  <= EX_ALU_Result_w;
+			MEM_write_data_w	<= EX_write_data_w;   
+			MEM_Wr_reg_addr_w	<= EX_Wr_reg_addr_w;
 
 			
 			------------------------- Memory TO WriteBack ------------------------- 
@@ -392,10 +394,10 @@ BEGIN
 			WB_jal_w			<= MEM_jal_w;
 			
 			----- State Reg -----
-			PC_plus_4_WB	<= PC_plus_4_MEM;
-			read_data_WB	<= read_data_MEM;
-			ALU_Result_WB	<= ALU_Result_MEM;
-			Wr_reg_addr_WB	<= Wr_reg_addr_MEM;
+			PC_plus_4_WB	<= MEM_PC_plus_4_w;
+			read_data_WB	<= MEM_read_data_w;
+			ALU_Result_WB	<= MEM_ALU_Result_w;
+			Wr_reg_addr_WB	<= MEM_Wr_reg_addr_w;
 		END IF;
 		
 	END PROCESS;		
@@ -405,11 +407,11 @@ BEGIN
 	IFinstruction_o <= IF_IR_w;
 	IDpc_0 <= ID_PC_plus_4_w-4;
 	IDinstruction_o <= ID_IR_w;
-	EXpc_0 <= PC_plus_4_EX-4;
-	EXinstruction_o <= IR_EX;
-	MEMpc_0 <= PC_plus_4_MEM-4;
-	MEMinstruction_o <= IR_EX;
+	EXpc_0 <= EX_PC_plus_4_w-4;
+	EXinstruction_o <= EX_IR_w;
+	MEMpc_0 <= MEM_PC_plus_4_w-4;
+	MEMinstruction_o <= EX_IR_w;
 	WBpc_0 <= PC_plus_4_WB-4;
-	WBinstruction_o <= IR_EX;
+	WBinstruction_o <= EX_IR_w;
 END structure;
 
