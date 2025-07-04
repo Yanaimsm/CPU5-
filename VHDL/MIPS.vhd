@@ -101,12 +101,12 @@ ARCHITECTURE structure OF MIPS IS
 	
 	-- WriteBack
 	SIGNAL WB_MemtoReg_w, WB_RegWrite_w, WB_jal_w   			: STD_LOGIC;
-	SIGNAL PC_plus_4_WB				      						: STD_LOGIC_VECTOR(9 DOWNTO 0);
-	SIGNAL read_data_WB											: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL ALU_Result_WB										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL Wr_reg_addr_WB										: STD_LOGIC_VECTOR( 4 DOWNTO 0 ); 
-	SIGNAL write_data_WB										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-	SIGNAL write_data_mux_WB									: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL WB_PC_plus_4_w				      						: STD_LOGIC_VECTOR(9 DOWNTO 0);
+	SIGNAL WB_read_data_w											: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL WB_ALU_Result_w										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL WB_Wr_reg_addr_w										: STD_LOGIC_VECTOR( 4 DOWNTO 0 ); 
+	SIGNAL WB_write_data_w										: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+	SIGNAL WB_write_data_mux_w									: STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
 	------------------------------------------------------
 
 BEGIN
@@ -146,7 +146,7 @@ BEGIN
         		read_data2_o => ID_read_data_2_w,
 				rt_register_o => ID_Wr_reg_addr_0_w,
 				rd_register_o => ID_Wr_reg_addr_1_w,
-				write_register_address => Wr_reg_addr_WB,
+				write_register_address => WB_Wr_reg_addr_w,
         		instruction_i => ID_IR_w,
 				PC_plus_4_shifted_i => ID_PC_plus_4_w(9 DOWNTO 2),
 				RegWrite_ctrl_i => WB_RegWrite_w,
@@ -157,7 +157,7 @@ BEGIN
 				Jump_i => ID_Jump_w,
 				JAL_i => ID_jal_w,
 				Stall_ID => IDStall_w,
-				write_data_i => write_data_mux_WB,
+				write_data_i => WB_write_data_mux_w,
 				Branch_read_data_FW => MEM_ALU_Result_w,
 				sign_extend_o => ID_Sign_extend_w,
 				PCSrc_o => ID_PCSrc_w,
@@ -202,7 +202,7 @@ BEGIN
 				Wr_reg_addr     => EX_Wr_reg_addr_w,
 				Wr_reg_addr_0   => EX_Wr_reg_addr_0_w,
 				Wr_reg_addr_1   => EX_Wr_reg_addr_1_w,
-				Wr_data_FW_WB	=> write_data_WB,  
+				Wr_data_FW_WB	=> WB_write_data_w,  
 				Wr_data_FW_MEM	=> MEM_ALU_Result_w, 
 				ForwardA		=> ForwardA_w,
 				ForwardB		=> ForwardB_w,
@@ -216,7 +216,7 @@ BEGIN
 				MemtoReg_MEM	=> MEM_MemtoReg_w,
 				WriteReg_EX		=> EX_Wr_reg_addr_w,
 				WriteReg_MEM   	=> MEM_Wr_reg_addr_w,
-				WriteReg_WB		=> Wr_reg_addr_WB,
+				WriteReg_WB		=> WB_Wr_reg_addr_w,
 				RegRs_EX		=> EX_IR_w(25 DOWNTO 21),
 				RegRt_EX 		=> EX_IR_w(20 DOWNTO 16),
 				RegRs_ID		=> ID_IR_w(25 DOWNTO 21),
@@ -259,13 +259,13 @@ BEGIN
 	----- Write Back -----	
 	WB:	WRITE_BACK
 	PORT MAP(	
-				alu_result_i => ALU_Result_WB,
-				dtcm_data_rd_i => read_data_WB,
-				PC_plus_4_shifted_i => PC_plus_4_WB(9 DOWNTO 2),
+				alu_result_i => WB_ALU_Result_w,
+				dtcm_data_rd_i => WB_read_data_w,
+				PC_plus_4_shifted_i => WB_PC_plus_4_w(9 DOWNTO 2),
 				MemtoReg_ctrl_i => WB_MemtoReg_w,
 				Jal_i => WB_jal_w,  
-				write_data_o => write_data_WB,
-				write_data_mux_o => write_data_mux_WB
+				write_data_o => WB_write_data_w,
+				write_data_mux_o => WB_write_data_mux_w
 	);
 	
 	---------------------------------------------------------------------------
@@ -394,10 +394,10 @@ BEGIN
 			WB_jal_w			<= MEM_jal_w;
 			
 			----- State Reg -----
-			PC_plus_4_WB	<= MEM_PC_plus_4_w;
-			read_data_WB	<= MEM_read_data_w;
-			ALU_Result_WB	<= MEM_ALU_Result_w;
-			Wr_reg_addr_WB	<= MEM_Wr_reg_addr_w;
+			WB_PC_plus_4_w	<= MEM_PC_plus_4_w;
+			WB_read_data_w	<= MEM_read_data_w;
+			WB_ALU_Result_w	<= MEM_ALU_Result_w;
+			WB_Wr_reg_addr_w	<= MEM_Wr_reg_addr_w;
 		END IF;
 		
 	END PROCESS;		
@@ -411,7 +411,7 @@ BEGIN
 	EXinstruction_o <= EX_IR_w;
 	MEMpc_0 <= MEM_PC_plus_4_w-4;
 	MEMinstruction_o <= EX_IR_w;
-	WBpc_0 <= PC_plus_4_WB-4;
+	WBpc_0 <= WB_PC_plus_4_w-4;
 	WBinstruction_o <= EX_IR_w;
 END structure;
 
