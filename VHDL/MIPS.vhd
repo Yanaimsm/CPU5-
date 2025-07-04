@@ -33,21 +33,21 @@ END 	MIPS;
 ------------ ARCHITECTURE ----------------
 ARCHITECTURE structure OF MIPS IS
 	---- FPGA OR ModelSim Signals ----
-	SIGNAL dMemAddr 		: STD_LOGIC_VECTOR(MemWidth-1 DOWNTO 0);
-	SIGNAL resetSim, enaSim	: STD_LOGIC;
+	SIGNAL dMemAddr_w 		: STD_LOGIC_VECTOR(MemWidth-1 DOWNTO 0);
+	SIGNAL rst_Sim_w, ena_Sim_w	: STD_LOGIC;
 	SIGNAL MCLK_w 			: STD_LOGIC;
 
 -------------- Signals To support CPI/IPC calculation and break point debug ability --------------------------------
 
-	SIGNAL BPADD_ena		: STD_LOGIC;
-	SIGNAL Run				: STD_LOGIC;
-	SIGNAL PC_BPADD			: STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+	SIGNAL BPADD_ena_w		: STD_LOGIC;
+	SIGNAL run_w				: STD_LOGIC;
+	SIGNAL pc_BPADD_w			: STD_LOGIC_VECTOR( 9 DOWNTO 0 );
 	---------------- Pipeline Registers --------------------------
 	
 	------ Control Registers ------
 	-- WB -- 
-	SIGNAL MemtoReg_WB, MemtoReg_MEM, MemtoReg_EX, MemtoReg_ID 	: STD_LOGIC;
-	SIGNAL RegWrite_WB, RegWrite_MEM, RegWrite_EX, RegWrite_ID 	: STD_LOGIC;
+	SIGNAL WB_MemtoReg_w, MEM_MemtoReg_w, EX_MemtoReg_w, ID_MemtoReg_w 	: STD_LOGIC;
+	SIGNAL WB_RegWrite_w, MEM_RegWrite_w, RegWrite_EX, RegWrite_ID 	: STD_LOGIC;
 	SIGNAL Jal_WB, Jal_MEM, Jal_EX, Jal_ID						: STD_LOGIC;
 	
 	-- MEM --
@@ -119,8 +119,8 @@ ARCHITECTURE structure OF MIPS IS
 
 BEGIN
 	-------------------------- FPGA or ModelSim -----------------------
-	resetSim 	<= rst_i WHEN SIM ELSE not rst_i;
-	enaSim		<= ena 	 WHEN SIM ELSE not ena;
+	rst_Sim_w 	<= rst_i WHEN SIM ELSE not rst_i;
+	ena_Sim_w		<= ena 	 WHEN SIM ELSE not ena;
 
 	G0:
 	if (not SIM) generate
@@ -140,14 +140,14 @@ BEGIN
     	    	pc_plus4_o => PC_plus_4_IF,
 				add_result_i => PCBranch_addr_ID( 7 DOWNTO 0 ), 
 				PCSrc_i => PCSrc_ID,
-				pc_o => PC_BPADD,      
+				pc_o => pc_BPADD_w,      
 				addr_res_o => JumpAddr_ID,
 				clk_i => MCLK_w, 
-				ena_i => enaSim,
+				ena_i => ena_Sim_w,
 				Stall_IF_i => Stall_IF,
-				BPADD_ena_i => BPADD_ena,
+				BPADD_ena_i => BPADD_ena_w,
 				inst_cnt_o => inst_cnt_w,
-				rst_i => resetSim );
+				rst_i => rst_Sim_w );
 	----- Instruction Decode -----
 	ID : Idecode
    	PORT MAP (	read_data1_o => read_data_1_ID,
@@ -157,7 +157,7 @@ BEGIN
 				write_register_address => Wr_reg_addr_WB,
         		instruction_i => IR_ID,
 				PC_plus_4_shifted_i => PC_plus_4_ID(9 DOWNTO 2),
-				RegWrite_ctrl_i => RegWrite_wb,
+				RegWrite_ctrl_i => WB_RegWrite_w,
 				ForwardA_ID => ForwardA_ID,
 				ForwardB_ID => ForwardB_ID,
 				BranchBeq_i => BranchBeq_ID,
@@ -172,7 +172,7 @@ BEGIN
 				JumpAddr_o => JumpAddr_ID,
 				PCBranch_addr_o => PCBranch_addr_ID,
         		clk_i => MCLK_w,  
-				rst_i => resetSim );
+				rst_i => rst_Sim_w );
 	
 			
 	----- Control Unit in Instruction Decode -----
@@ -182,7 +182,7 @@ BEGIN
 		funct_i => IR_ID(5 DOWNTO 0),
 		RegDst_ctrl_o => RegDst_ID,
 		ALUSrc_ctrl_o => ALUSrc_ID,
-		MemtoReg_ctrl_o => MemtoReg_ID,
+		MemtoReg_ctrl_o => ID_MemtoReg_w,
 		RegWrite_ctrl_o => RegWrite_ID,
 		MemRead_ctrl_o => MemRead_ID,
 		MemWrite_ctrl_o => MemWrite_ID,
@@ -192,7 +192,7 @@ BEGIN
 		Jal_o => Jal_ID,
 		ALUOp_ctrl_o => ALUOp_ID,
 		clock => MCLK_w,
-		reset => resetSim
+		reset => rst_Sim_w
 	);
 	----- Execute -----
 	EXE:  Execute
@@ -220,8 +220,8 @@ BEGIN
 	----- Hazard Unit (Stalls AND Flushs AND Forwarding) -----
 	Hazard:	HazardUnit
 	PORT MAP(	
-				MemtoReg_EX		=> MemtoReg_EX,	
-				MemtoReg_MEM	=> MemtoReg_MEM,
+				MemtoReg_EX		=> EX_MemtoReg_w,	
+				MemtoReg_MEM	=> MEM_MemtoReg_w,
 				WriteReg_EX		=> Wr_reg_addr_EX,
 				WriteReg_MEM   	=> Wr_reg_addr_MEM,
 				WriteReg_WB		=> Wr_reg_addr_WB,
@@ -230,8 +230,8 @@ BEGIN
 				RegRs_ID		=> IR_ID(25 DOWNTO 21),
 				RegRt_ID 		=> IR_ID(20 DOWNTO 16),
 				EX_RegWr		=> RegWrite_EX,
-				MEM_RegWr   	=> RegWrite_MEM,
-				WB_RegWr		=> RegWrite_WB,
+				MEM_RegWr   	=> MEM_RegWrite_w,
+				WB_RegWr		=> WB_RegWrite_w,
 				BranchBeq_ID	=> BranchBeq_ID,
 				BranchBne_ID	=> BranchBne_ID,
 				Jump_ID			=> Jump_ID,
@@ -247,30 +247,30 @@ BEGIN
 	----- Data Memory -----
 	ModelSim: 
 		IF (SIM = TRUE) GENERATE
-				dMemAddr <= ALU_Result_MEM (9 DOWNTO 2);
+				dMemAddr_w <= ALU_Result_MEM (9 DOWNTO 2);
 		END GENERATE ModelSim;
 		
 	FPGA: 
 		IF (SIM = FALSE) GENERATE
-				dMemAddr <= ALU_Result_MEM (9 DOWNTO 2) & "00";
+				dMemAddr_w <= ALU_Result_MEM (9 DOWNTO 2) & "00";
 		END GENERATE FPGA;
 	
 	MEM:  dmemory
 	GENERIC MAP(MemWidth => MemWidth) 
 	PORT MAP (	dtcm_data_rd_o => read_data_MEM,
-				dtcm_addr_i => dMemAddr,  --jump memory address by 4
+				dtcm_addr_i => dMemAddr_w,  --jump memory address by 4
 				dtcm_data_wr_i => write_data_MEM, 
 				MemRead_ctrl_i => MemRead_MEM, 
 				MemWrite_ctrl_i => MemWrite_MEM, 
                 clk_i => MCLK_w,  
-				rst_i => resetSim );
+				rst_i => rst_Sim_w );
 	----- Write Back -----	
 	WB:	WRITE_BACK
 	PORT MAP(	
 				alu_result_i => ALU_Result_WB,
 				dtcm_data_rd_i => read_data_WB,
 				PC_plus_4_shifted_i => PC_plus_4_WB(9 DOWNTO 2),
-				MemtoReg_ctrl_i => MemtoReg_WB,
+				MemtoReg_ctrl_i => WB_MemtoReg_w,
 				Jal_i => Jal_WB,  
 				write_data_o => write_data_WB,
 				write_data_mux_o => write_data_mux_WB
@@ -278,21 +278,21 @@ BEGIN
 	
 	---------------------------------------------------------------------------
 	------- PROCESS TO COUNT Clocks, Stalls, Flushs --------
-	PC		 	<= PC_BPADD;
-	BPADD_ena 	<= '1' WHEN (NOT SIM AND BPADD = PC_BPADD(9 DOWNTO 2) AND BPADD /= X"00") ELSE '0';
-	STRIGGER_o 	<= BPADD_ena;
+	PC		 	<= pc_BPADD_w;
+	BPADD_ena_w 	<= '1' WHEN (NOT SIM AND BPADD = pc_BPADD_w(9 DOWNTO 2) AND BPADD /= X"00") ELSE '0';
+	STRIGGER_o 	<= BPADD_ena_w;
 	
-	PROCESS (MCLK_w, resetSim, enaSim, Run, BPADD_ena, Flush_EX, Stall_ID, Stall_IF) 
+	PROCESS (MCLK_w, rst_Sim_w, ena_Sim_w, run_w, BPADD_ena_w, Flush_EX, Stall_ID, Stall_IF) 
 		VARIABLE CLKCNT_sig		: STD_LOGIC_VECTOR( 15 DOWNTO 0 );
 		VARIABLE STCNT_sig		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 		VARIABLE FHCNT_sig		: STD_LOGIC_VECTOR( 7 DOWNTO 0 );
 	BEGIN
-		IF resetSim = '1' THEN
+		IF rst_Sim_w = '1' THEN
 			CLKCNT_sig  := X"0000";
 			STCNT_sig 	:= X"00";
 			FHCNT_sig 	:= X"00";
-			Run			<= '0';
-		ELSIF (rising_edge(MCLK_w) and Run = '1' and BPADD_ena = '0') THEN 	-- count clk counts on rising edge
+			run_w			<= '0';
+		ELSIF (rising_edge(MCLK_w) and run_w = '1' and BPADD_ena_w = '0') THEN 	-- count clk counts on rising edge
 			CLKCNT_sig := CLKCNT_sig + 1;
 			IF (Stall_ID OR Stall_IF) = '1' THEN 	-- count on rising edge when stall occurs
 				STCNT_sig := STCNT_sig + 1;
@@ -302,10 +302,10 @@ BEGIN
 			END IF;
 		END IF;
 		
-		IF BPADD_ena = '1' THEN -- if PC got to BreakPointAddr then pause
-			Run			<= '0';
-		ELSIF enaSim = '1' THEN 
-			Run			<= '1';
+		IF BPADD_ena_w = '1' THEN -- if PC got to BreakPointAddr then pause
+			run_w			<= '0';
+		ELSIF ena_Sim_w = '1' THEN 
+			run_w			<= '1';
 		END IF;
 		------------- Signals To support CPI/IPC calculation -------------
 		CLKCNT_o 		<= CLKCNT_sig;
@@ -319,7 +319,7 @@ BEGIN
 	----------------------- Connect Pipeline Registers ------------------------
 	PROCESS BEGIN
 		WAIT UNTIL MCLK_w'EVENT AND MCLK_w = '1';
-		IF  (Run = '1' AND BPADD_ena = '0') THEN
+		IF  (run_w = '1' AND BPADD_ena_w = '0') THEN
 			-------------- Instruction Fetch TO Instruction Decode ---------------- 
 			IF Stall_ID = '0' THEN 
 				PC_plus_4_ID <= PC_plus_4_IF;
@@ -333,7 +333,7 @@ BEGIN
 			IF Flush_EX = '1' THEN -- CLR ID_IF register
 				----- Control Reg ----
 				Branch_EX 	     <= '0';
-				MemtoReg_EX      <= '0';
+				EX_MemtoReg_w      <= '0';
 				RegWrite_EX      <= '0';
 				MemWrite_EX      <= '0';
 				MemRead_EX	     <= '0';
@@ -356,7 +356,7 @@ BEGIN
 			ELSE 
 				----- Control Reg -----
 				Branch_EX 	     <= Branch_ID;
-				MemtoReg_EX      <= MemtoReg_ID;
+				EX_MemtoReg_w      <= ID_MemtoReg_w;
 				RegWrite_EX      <= RegWrite_ID;
 				MemWrite_EX      <= MemWrite_ID;
 				MemRead_EX	     <= MemRead_ID;		
@@ -380,8 +380,8 @@ BEGIN
 			
 			-------------------------- Execute TO Memory --------------------------- 
 			----- Control Reg -----
-			MemtoReg_MEM    <= MemtoReg_EX;
-			RegWrite_MEM    <= RegWrite_EX;
+			MEM_MemtoReg_w    <= EX_MemtoReg_w;
+			MEM_RegWrite_w    <= RegWrite_EX;
 			MemWrite_MEM    <= MemWrite_EX;
 			MemRead_MEM	    <= MemRead_EX;	
 			
@@ -397,8 +397,8 @@ BEGIN
 			
 			------------------------- Memory TO WriteBack ------------------------- 
 			----- Control Reg -----
-			MemtoReg_WB		<= MemtoReg_MEM;
-			RegWrite_WB		<= RegWrite_MEM;
+			WB_MemtoReg_w		<= MEM_MemtoReg_w;
+			WB_RegWrite_w		<= MEM_RegWrite_w;
 			Jal_WB			<= Jal_MEM;
 			
 			----- State Reg -----
