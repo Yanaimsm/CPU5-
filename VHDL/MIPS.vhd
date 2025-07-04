@@ -47,13 +47,13 @@ ARCHITECTURE structure OF MIPS IS
 	------ Control Registers ------
 	-- WB -- 
 	SIGNAL WB_MemtoReg_w, MEM_MemtoReg_w, EX_MemtoReg_w, ID_MemtoReg_w 	: STD_LOGIC;
-	SIGNAL WB_RegWrite_w, MEM_RegWrite_w, RegWrite_EX, RegWrite_ID 	: STD_LOGIC;
-	SIGNAL Jal_WB, Jal_MEM, Jal_EX, Jal_ID						: STD_LOGIC;
+	SIGNAL WB_RegWrite_w, MEM_RegWrite_w, EX_RegWrite_w, ID_RegWrite_w 	: STD_LOGIC;
+	SIGNAL WB_jal_w, MEM_jal_w, EX_jal_w, ID_jal_w						: STD_LOGIC;
 	
 	-- MEM --
-	SIGNAL Zero_EX			 						: STD_LOGIC;
-	SIGNAL Branch_EX, Branch_ID 					: STD_LOGIC;
-	SIGNAL MemWrite_MEM, MemWrite_EX, MemWrite_ID 	: STD_LOGIC;
+	SIGNAL EX_Zero_w			 						: STD_LOGIC;
+	SIGNAL EX_Branch_w, ID_Branch_w 					: STD_LOGIC;
+	SIGNAL MEM_MemWrite_w, EX_MemWrite_w, ID_MemWrite_w : STD_LOGIC;
 	SIGNAL MemRead_MEM, MemRead_EX, MemRead_ID 		: STD_LOGIC;
 	SIGNAL  BranchBeq_EX, BranchBeq_ID				: STD_LOGIC;
 	SIGNAL BranchBne_EX, BranchBne_ID				: STD_LOGIC;
@@ -163,7 +163,7 @@ BEGIN
 				BranchBeq_i => BranchBeq_ID,
 				BranchBne_i => BranchBne_ID,
 				Jump_i => Jump_ID,
-				JAL_i => Jal_ID,
+				JAL_i => ID_jal_w,
 				Stall_ID => Stall_ID,
 				write_data_i => write_data_mux_WB,
 				Branch_read_data_FW => ALU_Result_MEM,
@@ -183,13 +183,13 @@ BEGIN
 		RegDst_ctrl_o => RegDst_ID,
 		ALUSrc_ctrl_o => ALUSrc_ID,
 		MemtoReg_ctrl_o => ID_MemtoReg_w,
-		RegWrite_ctrl_o => RegWrite_ID,
+		RegWrite_ctrl_o => ID_RegWrite_w,
 		MemRead_ctrl_o => MemRead_ID,
-		MemWrite_ctrl_o => MemWrite_ID,
+		MemWrite_ctrl_o => ID_MemWrite_w,
 		BranchBeq_o => BranchBeq_ID,
 		BranchBne_o => BranchBne_ID,
 		Jump_o => Jump_ID,
-		Jal_o => Jal_ID,
+		Jal_o => ID_jal_w,
 		ALUOp_ctrl_o => ALUOp_ID,
 		clock => MCLK_w,
 		reset => rst_Sim_w
@@ -203,7 +203,7 @@ BEGIN
 				opcode_i		=> Opcode_EX,
 				ALUOp_ctrl_i	=> ALUOp_EX,
 				ALUSrc_ctrl_i	=> ALUSrc_EX,
-				zero_o			=> Zero_EX,
+				zero_o			=> EX_Zero_w,
 				RegDst			=> RegDst_EX,
                 alu_res_o		=> ALU_Result_EX,
 				pc_plus4_i		=> PC_plus_4_EX,
@@ -229,7 +229,7 @@ BEGIN
 				RegRt_EX 		=> IR_EX(20 DOWNTO 16),
 				RegRs_ID		=> IR_ID(25 DOWNTO 21),
 				RegRt_ID 		=> IR_ID(20 DOWNTO 16),
-				EX_RegWr		=> RegWrite_EX,
+				EX_RegWr		=> EX_RegWrite_w,
 				MEM_RegWr   	=> MEM_RegWrite_w,
 				WB_RegWr		=> WB_RegWrite_w,
 				BranchBeq_ID	=> BranchBeq_ID,
@@ -261,7 +261,7 @@ BEGIN
 				dtcm_addr_i => dMemAddr_w,  --jump memory address by 4
 				dtcm_data_wr_i => write_data_MEM, 
 				MemRead_ctrl_i => MemRead_MEM, 
-				MemWrite_ctrl_i => MemWrite_MEM, 
+				MemWrite_ctrl_i => MEM_MemWrite_w, 
                 clk_i => MCLK_w,  
 				rst_i => rst_Sim_w );
 	----- Write Back -----	
@@ -271,7 +271,7 @@ BEGIN
 				dtcm_data_rd_i => read_data_WB,
 				PC_plus_4_shifted_i => PC_plus_4_WB(9 DOWNTO 2),
 				MemtoReg_ctrl_i => WB_MemtoReg_w,
-				Jal_i => Jal_WB,  
+				Jal_i => WB_jal_w,  
 				write_data_o => write_data_WB,
 				write_data_mux_o => write_data_mux_WB
 	);
@@ -332,10 +332,10 @@ BEGIN
 			-------------------- Instruction Decode TO Execute -------------------- 
 			IF Flush_EX = '1' THEN -- CLR ID_IF register
 				----- Control Reg ----
-				Branch_EX 	     <= '0';
+				EX_Branch_w 	     <= '0';
 				EX_MemtoReg_w      <= '0';
-				RegWrite_EX      <= '0';
-				MemWrite_EX      <= '0';
+				EX_RegWrite_w      <= '0';
+				EX_MemWrite_w      <= '0';
 				MemRead_EX	     <= '0';
 				RegDst_EX 	     <= "00";  
 				ALUSrc_EX	     <= '0';
@@ -344,7 +344,7 @@ BEGIN
 				BranchBeq_EX	 <= '0';
 				BranchBne_EX	 <= '0';
 				Jump_EX			 <= '0';
-				Jal_EX			 <= '0';   
+				EX_jal_w			 <= '0';   
 				----- State Reg -----
 				PC_plus_4_EX     <= "0000000000";
 				IR_EX			 <= X"00000000";
@@ -355,10 +355,10 @@ BEGIN
 				Wr_reg_addr_1_EX <= "00000";
 			ELSE 
 				----- Control Reg -----
-				Branch_EX 	     <= Branch_ID;
+				EX_Branch_w 	     <= ID_Branch_w;
 				EX_MemtoReg_w      <= ID_MemtoReg_w;
-				RegWrite_EX      <= RegWrite_ID;
-				MemWrite_EX      <= MemWrite_ID;
+				EX_RegWrite_w      <= ID_RegWrite_w;
+				EX_MemWrite_w      <= ID_MemWrite_w;
 				MemRead_EX	     <= MemRead_ID;		
 				RegDst_EX 	     <= RegDst_ID;
 				ALUSrc_EX	     <= ALUSrc_ID;
@@ -367,7 +367,7 @@ BEGIN
 				BranchBeq_EX	 <= BranchBeq_ID;
 				BranchBne_EX	 <= BranchBne_ID;
 				Jump_EX			 <= Jump_ID;
-				Jal_EX			 <= Jal_ID;   
+				EX_jal_w			 <= ID_jal_w;   
 				----- State Reg -----
 				PC_plus_4_EX     <= PC_plus_4_ID;	
 				IR_EX			 <= IR_ID;
@@ -381,12 +381,12 @@ BEGIN
 			-------------------------- Execute TO Memory --------------------------- 
 			----- Control Reg -----
 			MEM_MemtoReg_w    <= EX_MemtoReg_w;
-			MEM_RegWrite_w    <= RegWrite_EX;
-			MemWrite_MEM    <= MemWrite_EX;
+			MEM_RegWrite_w    <= EX_RegWrite_w;
+			MEM_MemWrite_w    <= EX_MemWrite_w;
 			MemRead_MEM	    <= MemRead_EX;	
 			
 
-			Jal_MEM			<= Jal_EX;
+			MEM_jal_w			<= EX_jal_w;
 			----- State Reg -----
 			PC_plus_4_MEM	<= PC_plus_4_EX;
 	
@@ -399,7 +399,7 @@ BEGIN
 			----- Control Reg -----
 			WB_MemtoReg_w		<= MEM_MemtoReg_w;
 			WB_RegWrite_w		<= MEM_RegWrite_w;
-			Jal_WB			<= Jal_MEM;
+			WB_jal_w			<= MEM_jal_w;
 			
 			----- State Reg -----
 			PC_plus_4_WB	<= PC_plus_4_MEM;
