@@ -8,6 +8,8 @@ USE work.aux_package.ALL;
 -------------- ENTITY --------------------
 ENTITY MIPS IS
 	GENERIC ( MemWidth : INTEGER := 10;
+			 ITCM_ADDR_WIDTH : INTEGER := 10;
+			 WORDS_NUM : INTEGER := 1024;
 			 SIM : BOOLEAN := FALSE);
 	PORT( rst_i, clk_i, ena					: IN 	STD_LOGIC;
 		BPADD								: IN  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
@@ -127,7 +129,7 @@ BEGIN
    --------------------- PORT MAP COMPONENTS --------------------------
    ----- Instruction Fetch -----
 	IFE : Ifetch
-	GENERIC MAP(MemWidth => MemWidth, SIM => SIM) 
+	GENERIC MAP(MemWidth => MemWidth, SIM => SIM, WORDS_NUM => WORDS_NUM, ITCM_ADDR_WIDTH => ITCM_ADDR_WIDTH) 
 	PORT MAP (	instruction_o => IF_IR_w,
     	    	pc_plus4_o => IF_PC_plus_4_w,
 				add_result_i => ID_PCBranch_addr_w( 7 DOWNTO 0 ), 
@@ -212,28 +214,28 @@ BEGIN
 	----- Hazard Unit (Stalls AND Flushs AND Forwarding) -----
 	Hazard:	HazardUnit
 	PORT MAP(	
-				MemtoReg_EX		=> EX_MemtoReg_w,	
-				MemtoReg_MEM	=> MEM_MemtoReg_w,
-				WriteReg_EX		=> EX_Wr_reg_addr_w,
-				WriteReg_MEM   	=> MEM_Wr_reg_addr_w,
-				WriteReg_WB		=> WB_Wr_reg_addr_w,
-				RegRs_EX		=> EX_IR_w(25 DOWNTO 21),
-				RegRt_EX 		=> EX_IR_w(20 DOWNTO 16),
-				RegRs_ID		=> ID_IR_w(25 DOWNTO 21),
-				RegRt_ID 		=> ID_IR_w(20 DOWNTO 16),
-				EX_RegWr		=> EX_RegWrite_w,
-				MEM_RegWr   	=> MEM_RegWrite_w,
-				WB_RegWr		=> WB_RegWrite_w,
-				BranchBeq_ID	=> ID_BranchBeq_w,
-				BranchBne_ID	=> ID_BranchBne_w,
-				Jump_ID			=> ID_Jump_w,
-				Stall_IF        => IFStall_w,
-				Stall_ID        => IDStall_w,
+				EX_MemtoReg_i		=> EX_MemtoReg_w,	
+				MEM_MemtoReg_i	=> MEM_MemtoReg_w,
+				EX_WriteReg_i		=> EX_Wr_reg_addr_w,
+				MEM_WriteReg_i   	=> MEM_Wr_reg_addr_w,
+				WB_WriteReg_i		=> WB_Wr_reg_addr_w,
+				EX_RegRs_w		=> EX_IR_w(25 DOWNTO 21),
+				EX_RegRt_w 		=> EX_IR_w(20 DOWNTO 16),
+				ID_RegRs_i		=> ID_IR_w(25 DOWNTO 21),
+				ID_RegRt_i 		=> ID_IR_w(20 DOWNTO 16),
+				EX_RegWr_i		=> EX_RegWrite_w,
+				MEM_RegWr_i   	=> MEM_RegWrite_w,
+				WB_RegWr_i		=> WB_RegWrite_w,
+				ID_BranchBeq_i	=> ID_BranchBeq_w,
+				ID_BranchBne_i	=> ID_BranchBne_w,
+				ID_Jump_i			=> ID_Jump_w,
+				IF_Stall_o        => IFStall_w,
+				ID_Stall_o        => IDStall_w,
 				Flush_EX        => EXFlush_w,
-				ForwardA    	=> ForwardA_w,
-				ForwardB		=> ForwardB_w,
-				ForwardA_Branch => ID_ForwardA_w,
-				ForwardB_Branch	=> ID_ForwardB_w				
+				ForwardA_o    	=> ForwardA_w,
+				ForwardB_o		=> ForwardB_w,
+				ForwardA_Branch_o => ID_ForwardA_w,
+				ForwardB_Branch_o	=> ID_ForwardB_w				
 	);
 		
 	----- Data Memory -----
@@ -248,7 +250,9 @@ BEGIN
 		END GENERATE FPGA;
 	
 	MEM:  dmemory
-	GENERIC MAP(MemWidth => MemWidth) 
+	GENERIC MAP(MemWidth => MemWidth,
+				WORDS_NUM => WORDS_NUM,
+				ITCM_ADDR_WIDTH => ITCM_ADDR_WIDTH) 
 	PORT MAP (	dtcm_data_rd_o => MEM_read_data_w,
 				dtcm_addr_i => dMemAddr_w,  --jump memory address by 4
 				dtcm_data_wr_i => MEM_write_data_w, 
@@ -414,4 +418,3 @@ BEGIN
 	WBpc_0 <= WB_PC_plus_4_w-4;
 	WBinstruction_o <= EX_IR_w;
 END structure;
-

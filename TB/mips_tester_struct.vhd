@@ -1,4 +1,3 @@
-
 --
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
@@ -7,19 +6,18 @@ USE work.const_package.all;
 
 ENTITY MIPS_tester IS
    PORT( 
-      ALU_result_out  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
-      Branch_out      : IN     STD_LOGIC;
-      Instruction_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
-      Memwrite_out    : IN     STD_LOGIC;
-      PC              : IN     STD_LOGIC_VECTOR ( 9 DOWNTO 0 );
-      Regwrite_out    : IN     STD_LOGIC;
-      Zero_out        : IN     STD_LOGIC;
-      read_data_1_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
-      read_data_2_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
-      write_data_out  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
-      clock           : OUT    STD_LOGIC;
-	   ena			    : OUT    STD_LOGIC;
-      reset           : OUT    STD_LOGIC
+      ALU_res_o  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      Branch_o      : IN     STD_LOGIC;
+      Instruction_o : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      pc_o    : IN     STD_LOGIC_VECTOR ( 9 DOWNTO 0 );
+      Regwrite_o    : IN     STD_LOGIC;
+      Zero_tb        : IN     STD_LOGIC;
+      read_data_1_tb : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      read_data_2_tb : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      write_data_tb  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      clk_tb           : OUT    STD_LOGIC;
+      ena             : OUT    STD_LOGIC;
+      rst_tb           : OUT    STD_LOGIC
    );
 
 -- Declarations
@@ -55,11 +53,11 @@ BEGIN
       WAIT;
    END PROCESS u_0clk_proc;
    mw_U_0disable_clk <= TRUE AFTER 10000000 ns;
-   clock <= mw_U_0clk;
+   clk_tb <= mw_U_0clk;
 
    -- ModuleWare code(v1.9) for instance 'U_1' of 'pulse'
    ena	 <= '1';
-   reset <= mw_U_1pulse;
+   rst_tb <= mw_U_1pulse;
    u_1pulse_proc: PROCESS
    BEGIN
       mw_U_1pulse <= 

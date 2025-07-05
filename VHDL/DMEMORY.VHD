@@ -8,7 +8,10 @@ USE altera_mf.altera_mf_components.all;
 USE work.const_package.all;
 ---------------- ENTITY --------------
 ENTITY dmemory IS
-	GENERIC (MemWidth	: INTEGER);
+	GENERIC (MemWidth	: INTEGER;
+		WORDS_NUM	: INTEGER;
+		ITCM_ADDR_WIDTH	: INTEGER
+		);
 	PORT(
 		dtcm_data_rd_o 			: OUT 	STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
         dtcm_addr_i 			: IN 	STD_LOGIC_VECTOR( MemWidth-1 DOWNTO 0 );
@@ -23,11 +26,13 @@ BEGIN
 	data_memory : altsyncram
 	GENERIC MAP  (
 		operation_mode => "SINGLE_PORT",
-		width_a => 32,
-		widthad_a => MemWidth,
+		width_a => DATA_BUS_WIDTH,
+		widthad_a => ITCM_ADDR_WIDTH,
+		numwords_a => WORDS_NUM,
+		lpm_hint => "ENABLE_RUNTIME_MOD = YES,INSTANCE_NAME = DTCM",
 		lpm_type => "altsyncram",
 		outdata_reg_a => "UNREGISTERED",
-		init_file => "C:\Users\yanai\Local\Documents\Yanai\University\LABS\CPU Architercture\Lab5\CPU5_new\CODE\dmemory.hex",
+		init_file => "C:\Users\yanai\Local\Documents\Yanai\University\LABS\CPU Architercture\Lab5\CPU5_new\CODE\DTCM.hex",
 		intended_device_family => "Cyclone"
 	)
 	PORT MAP (

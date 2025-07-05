@@ -10,8 +10,8 @@ package aux_package is
 		SIM				: BOOLEAN;
 		PC_WIDTH		: integer := 10;
 		NEXT_PC_WIDTH	: integer := 8; -- NEXT_PC_WIDTH = PC_WIDTH-2
-		ITCM_ADDR_WIDTH	: integer := 8;
-		WORDS_NUM		: integer := 256;
+		ITCM_ADDR_WIDTH	: integer ;
+		WORDS_NUM		: integer ;
 		INST_CNT_WIDTH	: integer := 16
 	);
 	PORT(	instruction_o : OUT STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
@@ -91,7 +91,10 @@ package aux_package is
 	END COMPONENT;
 
 	COMPONENT dmemory
-	GENERIC (MemWidth	: INTEGER);
+	GENERIC (MemWidth	: INTEGER;
+		WORDS_NUM	: INTEGER;
+		ITCM_ADDR_WIDTH	: INTEGER
+		);
 	PORT(
 		dtcm_data_rd_o : OUT STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0);
 		dtcm_addr_i : IN STD_LOGIC_VECTOR(MemWidth-1 DOWNTO 0);
@@ -114,15 +117,15 @@ package aux_package is
 	
 	COMPONENT HazardUnit IS
 	PORT( 
-		MemtoReg_EX, MemtoReg_MEM	 		 : IN STD_LOGIC;
-		WriteReg_EX, WriteReg_MEM, WriteReg_WB : IN  STD_LOGIC_VECTOR(4 DOWNTO 0);
-		RegRs_ID, RegRt_ID 					 : IN  STD_LOGIC_VECTOR(4 DOWNTO 0);
-		RegRs_EX, RegRt_EX					 : IN  STD_LOGIC_VECTOR(4 DOWNTO 0);
-		EX_RegWr, MEM_RegWr, WB_RegWr		 : IN  STD_LOGIC;
-		BranchBeq_ID, BranchBne_ID, Jump_ID	 : IN STD_LOGIC;
-		Stall_IF, Stall_ID, Flush_EX 	 	 : OUT STD_LOGIC;
-		ForwardA, ForwardB				     : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
-		ForwardA_Branch, ForwardB_Branch		     : OUT STD_LOGIC
+		EX_MemtoReg_i, MEM_MemtoReg_i          : IN STD_LOGIC;
+		EX_WriteReg_i, MEM_WriteReg_i, WB_WriteReg_i : IN  STD_LOGIC_VECTOR(4 DOWNTO 0);
+		ID_RegRs_i, ID_RegRt_i 					 : IN  STD_LOGIC_VECTOR(4 DOWNTO 0);
+		EX_RegRs_w, EX_RegRt_w					 : IN  STD_LOGIC_VECTOR(4 DOWNTO 0);
+		EX_RegWr_i, MEM_RegWr_i, WB_RegWr_i		 : IN  STD_LOGIC;
+		ID_BranchBeq_i, ID_BranchBne_i, ID_Jump_i	 : IN STD_LOGIC;
+		IF_Stall_o, ID_Stall_o, Flush_EX 	 	 : OUT STD_LOGIC;
+		ForwardA_o, ForwardB_o				     : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+		ForwardA_Branch_o, ForwardB_Branch_o		     : OUT STD_LOGIC
 		);
 	END 	COMPONENT;
 

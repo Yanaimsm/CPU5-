@@ -11,11 +11,11 @@ USE altera_mf.altera_mf_components.all;
 ENTITY Ifetch IS
 	GENERIC (
 		MemWidth         : INTEGER;
-		SIM              : BOOLEAN;
+		SIM              : BOOLEAN := FALSE;
 		PC_WIDTH         : INTEGER := 10;
 		NEXT_PC_WIDTH    : INTEGER := 8;  -- NEXT_PC_WIDTH = PC_WIDTH - 2
-		ITCM_ADDR_WIDTH  : INTEGER := 8;
-		WORDS_NUM        : INTEGER := 256;
+		ITCM_ADDR_WIDTH  : INTEGER ;
+		WORDS_NUM        : INTEGER ;
 		INST_CNT_WIDTH   : INTEGER := 16
 	);
 	PORT (
@@ -47,15 +47,17 @@ BEGIN
 
 	--------------- ROM for Instruction Memory ---------------
 	inst_memory: altsyncram
-		GENERIC MAP (
-			operation_mode           => "ROM",
-			width_a                  => 32,
-			widthad_a                => MemWidth,
-			lpm_type                 => "altsyncram",
-			outdata_reg_a            => "UNREGISTERED",
-			init_file                => "C:\Users\yanai\Local\Documents\Yanai\University\LABS\CPU Architercture\Lab5\CPU5_new\CODE\program.hex",
-			intended_device_family   => "Cyclone"
-		)
+	GENERIC MAP (
+		operation_mode => "ROM",
+		width_a => DATA_BUS_WIDTH,
+		widthad_a => MemWidth,
+		numwords_a => WORDS_NUM,
+		lpm_hint => "ENABLE_RUNTIME_MOD = YES,INSTANCE_NAME = ITCM",
+		lpm_type => "altsyncram",
+		outdata_reg_a => "UNREGISTERED",
+		init_file => "C:\Users\yanai\Local\Documents\Yanai\University\LABS\CPU Architercture\Lab5\CPU5_new\CODE\ITCM.hex",
+		intended_device_family => "Cyclone"
+	)
 		PORT MAP (
 			clock0     => ifetch_clock,  -- Falling Edge
 			address_a  => itcm_addr_w,

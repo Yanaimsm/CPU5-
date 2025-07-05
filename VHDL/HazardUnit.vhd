@@ -8,46 +8,45 @@ USE work.const_package.ALL;
 -------------- ENTITY --------------------
 ENTITY HazardUnit IS
 	PORT( 
-		MemtoReg_EX, MemtoReg_MEM	 		 : IN STD_LOGIC;
-		WriteReg_EX, WriteReg_MEM, WriteReg_WB : IN  STD_LOGIC_VECTOR(4 DOWNTO 0);  -- rt and rd mux output
-		RegRs_ID, RegRt_ID 					 : IN  STD_LOGIC_VECTOR(4 DOWNTO 0);
-		RegRs_EX, RegRt_EX					 : IN  STD_LOGIC_VECTOR(4 DOWNTO 0);
-		EX_RegWr, MEM_RegWr, WB_RegWr		 : IN  STD_LOGIC;
-		BranchBeq_ID, BranchBne_ID, Jump_ID	 : IN STD_LOGIC;
-		Stall_IF, Stall_ID, Flush_EX 	 	 : OUT STD_LOGIC;
-		ForwardA, ForwardB				     : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
-		ForwardA_Branch, ForwardB_Branch	 : OUT STD_LOGIC
+		EX_MemtoReg_i, MEM_MemtoReg_i	 		 			: IN STD_LOGIC;
+		EX_WriteReg_i, MEM_WriteReg_i, WB_WriteReg_i 			: IN  STD_LOGIC_VECTOR(4 DOWNTO 0);  -- rt and rd mux output
+		ID_RegRs_i, ID_RegRt_i 					 			: IN  STD_LOGIC_VECTOR(4 DOWNTO 0);
+		EX_RegRs_w, EX_RegRt_w					 			: IN  STD_LOGIC_VECTOR(4 DOWNTO 0);
+		EX_RegWr_i, MEM_RegWr_i, WB_RegWr_i		 			: IN  STD_LOGIC;
+		ID_BranchBeq_i, ID_BranchBne_i, ID_Jump_i	 			: IN STD_LOGIC;
+		IF_Stall_o, ID_Stall_o, Flush_EX 	 	 			: OUT STD_LOGIC;
+		ForwardA_o, ForwardB_o				    			: OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+		ForwardA_Branch_o, ForwardB_Branch_o				: OUT STD_LOGIC
 		);
 END 	HazardUnit;
 ------------ ARCHITECTURE ----------------
 ARCHITECTURE structure OF HazardUnit IS
-SIGNAL LwStall, BranchStall : BOOLEAN;
+SIGNAL LwStall_w, BranchStall_w : BOOLEAN;
 BEGIN
 ----------- Stall and Flush -----------------------	
-	LwStall <= MemtoReg_EX = '1' AND ( RegRt_EX = RegRs_ID OR RegRt_EX = RegRt_ID );
-	BranchStall <= ((BranchBeq_ID = '1' OR BranchBne_ID = '1') AND EX_RegWr = '1' AND (WriteReg_EX = RegRs_ID OR WriteReg_EX = RegRt_ID)) OR (BranchBeq_ID = '1' AND MemtoReg_MEM = '1' AND (WriteReg_MEM = RegRs_ID OR WriteReg_MEM = RegRt_ID));
-	--BranchBneStall <= (BranchBne_ID = '1' AND EX_RegWr = '1' AND (WriteReg_EX /= RegRs_ID OR WriteReg_EX /= RegRt_ID)) OR (BranchBne_ID = '1' AND MemtoReg_MEM = '1' AND (WriteReg_MEM /= RegRs_ID OR WriteReg_MEM /= RegRt_ID));
+	LwStall_w <= EX_MemtoReg_i = '1' AND ( EX_RegRt_w = ID_RegRs_i OR EX_RegRt_w = ID_RegRt_i );
+	BranchStall_w <= ((ID_BranchBeq_i = '1' OR ID_BranchBne_i = '1') AND EX_RegWr_i = '1' AND (EX_WriteReg_i = ID_RegRs_i OR EX_WriteReg_i = ID_RegRt_i)) OR (ID_BranchBeq_i = '1' AND MEM_MemtoReg_i = '1' AND (MEM_WriteReg_i = ID_RegRs_i OR MEM_WriteReg_i = ID_RegRt_i));
 	
-	Stall_IF <= '1' WHEN (LwStall OR BranchStall) ELSE '0';
-	Stall_ID <= '1' WHEN (LwStall OR BranchStall) ELSE '0';
-	--Flush_EX <= '1' WHEN (LwStall OR BranchStall OR Jump_ID = '1') ELSE '0';
-	Flush_EX <= '1' WHEN (LwStall OR BranchStall) ELSE '0';
+	IF_Stall_o <= '1' WHEN (LwStall_w OR BranchStall_w) ELSE '0';
+	ID_Stall_o <= '1' WHEN (LwStall_w OR BranchStall_w) ELSE '0';
+	--Flush_EX <= '1' WHEN (LwStall_w OR BranchStall_w OR ID_Jump_i = '1') ELSE '0';
+	Flush_EX <= '1' WHEN (LwStall_w OR BranchStall_w) ELSE '0';
 
 ----------- Forwarding -----------------------	
     --------------------- Register Forwarding -----------------------
 	-- EX Hazard
-	ForwardA <= "10" WHEN ((MEM_RegWr = '1') AND (WriteReg_MEM /= "00000") AND (WriteReg_MEM = RegRs_EX)) ELSE  -- EX Hazard take from MEM
-				"01" WHEN (WB_RegWr = '1' AND WriteReg_WB /= "00000" AND (NOT (MEM_RegWr = '1' AND WriteReg_MEM /= "00000" AND (WriteReg_MEM = RegRs_EX))) AND WriteReg_WB = RegRs_EX)	ELSE -- MEM Hazard take from WB
+	ForwardA_o <= "10" WHEN ((MEM_RegWr_i = '1') AND (MEM_WriteReg_i /= "00000") AND (MEM_WriteReg_i = EX_RegRs_w)) ELSE  -- EX Hazard take from MEM
+				"01" WHEN (WB_RegWr_i = '1' AND WB_WriteReg_i /= "00000" AND (NOT (MEM_RegWr_i = '1' AND MEM_WriteReg_i /= "00000" AND (MEM_WriteReg_i = EX_RegRs_w))) AND WB_WriteReg_i = EX_RegRs_w)	ELSE -- MEM Hazard take from WB
 				"00";
 
-	ForwardB <= "10" WHEN (MEM_RegWr = '1' AND WriteReg_MEM /= "00000" AND WriteReg_MEM = RegRt_EX) ELSE  -- EX Hazard take from MEM
-				"01" WHEN (WB_RegWr = '1' AND WriteReg_WB /= "00000" AND (NOT (MEM_RegWr = '1' AND WriteReg_MEM /= "00000" AND (WriteReg_MEM = RegRt_EX))) AND WriteReg_WB = RegRt_EX)	ELSE -- MEM Hazard take from WB
+	ForwardB_o <= "10" WHEN (MEM_RegWr_i = '1' AND MEM_WriteReg_i /= "00000" AND MEM_WriteReg_i = EX_RegRt_w) ELSE  -- EX Hazard take from MEM
+				"01" WHEN (WB_RegWr_i = '1' AND WB_WriteReg_i /= "00000" AND (NOT (MEM_RegWr_i = '1' AND MEM_WriteReg_i /= "00000" AND (MEM_WriteReg_i = EX_RegRt_w))) AND WB_WriteReg_i = EX_RegRt_w)	ELSE -- MEM Hazard take from WB
 				"00";	
 
 	-------------- Branch Forwarding --------------------
-	ForwardA_Branch <= '1' WHEN ((RegRs_ID /= "00000") AND (RegRs_ID = WriteReg_MEM) AND MEM_RegWr = '1') ELSE '0';
+	ForwardA_Branch_o <= '1' WHEN ((ID_RegRs_i /= "00000") AND (ID_RegRs_i = MEM_WriteReg_i) AND MEM_RegWr_i = '1') ELSE '0';
 	
-	ForwardB_Branch <= '1' WHEN ((RegRt_ID /= "00000") AND (RegRt_ID = WriteReg_MEM) AND MEM_RegWr = '1') ELSE '0';
+	ForwardB_Branch_o <= '1' WHEN ((ID_RegRt_i /= "00000") AND (ID_RegRt_i = MEM_WriteReg_i) AND MEM_RegWr_i = '1') ELSE '0';
 	
 
 

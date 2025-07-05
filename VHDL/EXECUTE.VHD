@@ -126,42 +126,47 @@ END PROCESS;
 
 ------------ ALU Process (Integrated ALU) -----------------------------
 ALU_PROCESS: PROCESS ( alu_ctl_w, a_input_w, b_input_w )
-	variable product : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 downto 0); 
+    variable product : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 downto 0);
+    variable tmp : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 downto 0);
 BEGIN
-	--------------- Select ALU operation ---------------------
- 	CASE alu_ctl_w IS
-		-- ALU performs ALUresult = A_input AND B_input
-		WHEN ALU_AND 	=>	alu_out_mux_w 	<= a_input_w AND b_input_w; 
-		-- ALU performs ALUresult = A_input OR B_input
-     	WHEN ALU_OR 	=>	alu_out_mux_w 	<= a_input_w OR b_input_w;
-		-- ALU performs ALUresult = A_input + B_input
-	 	WHEN ALU_ADD 	=>	alu_out_mux_w 	<= a_input_w + b_input_w; 
-		-- ALU performs ALUresult = A_input * B_input
- 	 	WHEN ALU_MUL 	=>	product := a_input_w(15 DOWNTO 0) * b_input_w(15 DOWNTO 0); -- result 64 bit
-							alu_out_mux_w <= product; -- Take Lower Part
-		-- ALU performs ALUresult = A_input XOR B_input
- 	 	WHEN ALU_XOR 	=>	alu_out_mux_w 	<= a_input_w XOR b_input_w;
-		-- ALU performs ALUresult = A_input SLL B_input
- 	 	WHEN ALU_SLL 	=>	alu_out_mux_w 	<=	std_logic_vector(shift_left(ieee.numeric_std.unsigned(a_input_w),to_integer(ieee.numeric_std.unsigned(b_input_w(10 downto 6)))));
-
-		-- ALU performs ALUresult = A_input SRL B_input
- 	 	WHEN ALU_SRL 	=>	alu_out_mux_w 	<=	std_logic_vector(shift_right(ieee.numeric_std.unsigned(a_input_w),to_integer(ieee.numeric_std.unsigned(b_input_w(10 downto 6))))); 
-
-		-- ALU performs ALUresult = A_input -B_input
- 	 	WHEN ALU_SUB 	=>	alu_out_mux_w 	<= a_input_w - b_input_w; 
-		-- ALU performs SLT
-		WHEN ALU_SLT  => 
-			alu_out_mux_w <= (others => '0');
-			alu_out_mux_w(0) <= '1' WHEN (ieee.numeric_std.signed(a_input_w) < ieee.numeric_std.signed(b_input_w)) ELSE '0'; 
-		-- ALU performs SLTi
-		WHEN ALU_SLTI => 
-			alu_out_mux_w <= (others => '0');
-			alu_out_mux_w(0) <= '1' WHEN (ieee.numeric_std.signed(a_input_w) < ieee.numeric_std.signed(b_input_w)) ELSE '0'; 
-		-- ALU performs LUI
-  	 	WHEN ALU_LUI => alu_out_mux_w <= b_input_w(15 downto 0) & X"0000";
-		-- OUTPUT ZERO
- 	 	WHEN OTHERS	=>	alu_out_mux_w 	<= X"00000000" ;
-  	END CASE;
+    --------------- Select ALU operation ---------------------
+    CASE alu_ctl_w IS
+        -- ALU performs ALUresult = A_input AND B_input
+        WHEN ALU_AND    =>    alu_out_mux_w    <= a_input_w AND b_input_w; 
+        -- ALU performs ALUresult = A_input OR B_input
+        WHEN ALU_OR     =>    alu_out_mux_w    <= a_input_w OR b_input_w;
+        -- ALU performs ALUresult = A_input + B_input
+        WHEN ALU_ADD    =>    alu_out_mux_w    <= a_input_w + b_input_w; 
+        -- ALU performs ALUresult = A_input * B_input
+        WHEN ALU_MUL    =>    product := a_input_w(15 DOWNTO 0) * b_input_w(15 DOWNTO 0); -- result 64 bit
+                            alu_out_mux_w <= product; -- Take Lower Part
+        -- ALU performs ALUresult = A_input XOR B_input
+        WHEN ALU_XOR    =>    alu_out_mux_w    <= a_input_w XOR b_input_w;
+        -- ALU performs ALUresult = A_input SLL B_input
+        WHEN ALU_SLL    =>    alu_out_mux_w    <=    std_logic_vector(shift_left(ieee.numeric_std.unsigned(a_input_w),to_integer(ieee.numeric_std.unsigned(b_input_w(10 downto 6)))));
+        -- ALU performs ALUresult = A_input SRL B_input
+        WHEN ALU_SRL    =>    alu_out_mux_w    <=    std_logic_vector(shift_right(ieee.numeric_std.unsigned(a_input_w),to_integer(ieee.numeric_std.unsigned(b_input_w(10 downto 6))))); 
+        -- ALU performs ALUresult = A_input -B_input
+        WHEN ALU_SUB    =>    alu_out_mux_w    <= a_input_w - b_input_w; 
+        -- ALU performs SLT
+        WHEN ALU_SLT  => 
+            tmp := (others => '0');
+            if ieee.numeric_std.signed(a_input_w) < ieee.numeric_std.signed(b_input_w) then
+                tmp(0) := '1';
+            end if;
+            alu_out_mux_w <= tmp;
+        -- ALU performs SLTi
+        WHEN ALU_SLTI => 
+            tmp := (others => '0');
+            if ieee.numeric_std.signed(a_input_w) < ieee.numeric_std.signed(b_input_w) then
+                tmp(0) := '1';
+            end if;
+            alu_out_mux_w <= tmp;
+        -- ALU performs LUI
+        WHEN ALU_LUI => alu_out_mux_w <= b_input_w(15 downto 0) & X"0000";
+        -- OUTPUT ZERO
+        WHEN OTHERS    =>    alu_out_mux_w    <= X"00000000" ;
+    END CASE;
 END PROCESS;
 
   

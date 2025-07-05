@@ -1,5 +1,3 @@
-
-
 ENTITY a_mips_tb IS
 -- Declarations
 
@@ -20,30 +18,31 @@ ARCHITECTURE struct OF a_mips_tb IS
    -- Architecture declarations
 
    -- Internal signal declarations
-   SIGNAL ALU_result_out  : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-   SIGNAL Branch_out      : STD_LOGIC;
-   SIGNAL Instruction_out : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-   SIGNAL Memwrite_out    : STD_LOGIC;
-   SIGNAL PC              : STD_LOGIC_VECTOR( 9 DOWNTO 0 );
-   SIGNAL Regwrite_out    : STD_LOGIC;
-   SIGNAL Zero_out        : STD_LOGIC;
-   SIGNAL clock           : STD_LOGIC;
-   SIGNAL read_data_1_out : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-   SIGNAL read_data_2_out : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-   SIGNAL reset           : STD_LOGIC;
-   SIGNAL write_data_out  : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-   SIGNAL CLKCNT		     : STD_LOGIC_VECTOR(15 DOWNTO 0);
-   SIGNAL STCNT		 	  : STD_LOGIC_VECTOR(7 DOWNTO 0);
-   SIGNAL FHCNT			  : STD_LOGIC_VECTOR(7 DOWNTO 0);
-   SIGNAL BPADD			  : STD_LOGIC_VECTOR(7 DOWNTO 0);
-   SIGNAL ST_trigger	     : STD_LOGIC;
-   SIGNAL ena			     : STD_LOGIC;
+   SIGNAL ALU_res_o  : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+   SIGNAL Branch_o      : STD_LOGIC;
+   SIGNAL Instruction_o : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+   SIGNAL pc_o    : STD_LOGIC_VECTOR( 9 DOWNTO 0 );
+   SIGNAL Regwrite_o    : STD_LOGIC;
+   SIGNAL Zero_tb        : STD_LOGIC;
+   SIGNAL clk_tb           : STD_LOGIC;
+   SIGNAL read_data_1_tb : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+   SIGNAL read_data_2_tb : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+   SIGNAL rst_tb           : STD_LOGIC;
+   SIGNAL write_data_tb  : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
+   SIGNAL CLKCNT          : STD_LOGIC_VECTOR(15 DOWNTO 0);
+   SIGNAL STCNT           : STD_LOGIC_VECTOR(7 DOWNTO 0);
+   SIGNAL FHCNT           : STD_LOGIC_VECTOR(7 DOWNTO 0);
+   SIGNAL BPADD           : STD_LOGIC_VECTOR(7 DOWNTO 0);
+   SIGNAL ST_trigger      : STD_LOGIC;
+   SIGNAL ena             : STD_LOGIC;
    
 
 
    -- Component Declarations
    COMPONENT MIPS
 	GENERIC ( MemWidth : INTEGER := 10;
+			 ITCM_ADDR_WIDTH : INTEGER := 10;
+			 WORDS_NUM : INTEGER := 1024;
 			 SIM : BOOLEAN := TRUE);
 	PORT( rst_i, clk_i, ena		: IN  STD_LOGIC; 
       BPADD						: IN  STD_LOGIC_VECTOR( 7 DOWNTO 0 );
@@ -68,19 +67,18 @@ ARCHITECTURE struct OF a_mips_tb IS
 	END 	COMPONENT;
    COMPONENT MIPS_tester
    PORT (
-      ALU_result_out  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
-      Branch_out      : IN     STD_LOGIC ;
-      Instruction_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
-      Memwrite_out    : IN     STD_LOGIC ;
-      PC              : IN     STD_LOGIC_VECTOR ( 9 DOWNTO 0 );
-      Regwrite_out    : IN     STD_LOGIC ;
-      Zero_out        : IN     STD_LOGIC ;
-      read_data_1_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
-      read_data_2_out : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
-      write_data_out  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
-      clock           : OUT    STD_LOGIC ;
-	  ena			       : OUT    STD_LOGIC;
-      reset           : OUT    STD_LOGIC 
+      ALU_res_o  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      Branch_o      : IN     STD_LOGIC ;
+      Instruction_o : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      pc_o    : IN     STD_LOGIC_VECTOR ( 9 DOWNTO 0 );
+      Regwrite_o    : IN     STD_LOGIC ;
+      Zero_tb        : IN     STD_LOGIC ;
+      read_data_1_tb : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      read_data_2_tb : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      write_data_tb  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
+      clk_tb           : OUT    STD_LOGIC ;
+      ena             : OUT    STD_LOGIC;
+      rst_tb           : OUT    STD_LOGIC 
    );
    END COMPONENT;
 
@@ -98,12 +96,14 @@ BEGIN
    U_0 : MIPS
 	  GENERIC MAP (
 		 MemWidth => 8,
+       ITCM_ADDR_WIDTH => 8,
+       WORDS_NUM => 256,
 		 SIM => TRUE ) 
       PORT MAP (
-         rst_i           => reset,
-         clk_i           => clock,
+         rst_i           => rst_tb,
+         clk_i           => clk_tb,
          ena             => ena,
-         PC              => PC,
+         PC              => pc_o,
          CLKCNT_o  		    => CLKCNT,
          STCNT_o 			 => STCNT,
          FHCNT_o 			 => FHCNT,
@@ -112,19 +112,18 @@ BEGIN
       );
    U_1 : MIPS_tester
       PORT MAP (
-         ALU_result_out  => ALU_result_out,
-         Branch_out      => Branch_out,
-         Instruction_out => Instruction_out,
-         Memwrite_out    => Memwrite_out,
-         PC              => PC,
-         Regwrite_out    => Regwrite_out,
-         Zero_out        => Zero_out,
-         read_data_1_out => read_data_1_out,
-         read_data_2_out => read_data_2_out,
-         write_data_out  => write_data_out,
-         clock           => clock,
-		   ena			    => ena,
-         reset           => reset
+         ALU_res_o  => ALU_res_o,
+         Branch_o      => Branch_o,
+         Instruction_o => Instruction_o,
+         pc_o    => pc_o,
+         Regwrite_o    => Regwrite_o,
+         Zero_tb        => Zero_tb,
+         read_data_1_tb => read_data_1_tb,
+         read_data_2_tb => read_data_2_tb,
+         write_data_tb  => write_data_tb,
+         clk_tb           => clk_tb,
+         ena             => ena,
+         rst_tb           => rst_tb
       );
 
 END struct;
