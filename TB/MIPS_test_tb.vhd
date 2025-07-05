@@ -4,7 +4,7 @@ USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 USE work.const_package.all;
 
-ENTITY MIPS_tester IS
+ENTITY MIPS_test_tb IS
    PORT( 
       ALU_res_o  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       Branch_o      : IN     STD_LOGIC;
@@ -16,13 +16,13 @@ ENTITY MIPS_tester IS
       read_data_2_tb : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       write_data_tb  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       clk_tb           : OUT    STD_LOGIC;
-      ena             : OUT    STD_LOGIC;
+      ena_tb             : OUT    STD_LOGIC;
       rst_tb           : OUT    STD_LOGIC
    );
 
 -- Declarations
 
-END MIPS_tester ;
+END MIPS_test_tb ;
 
 
 --
@@ -31,7 +31,7 @@ USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 
 
-ARCHITECTURE struct OF MIPS_tester IS
+ARCHITECTURE struct OF MIPS_test_tb IS
 
    -- ModuleWare signal declarations(v1.9) for instance 'U_0' of 'clk'
    SIGNAL mw_U_0clk : std_logic;
@@ -56,7 +56,7 @@ BEGIN
    clk_tb <= mw_U_0clk;
 
    -- ModuleWare code(v1.9) for instance 'U_1' of 'pulse'
-   ena	 <= '1';
+   ena_tb	 <= '1';
    rst_tb <= mw_U_1pulse;
    u_1pulse_proc: PROCESS
    BEGIN

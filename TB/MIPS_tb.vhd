@@ -1,7 +1,7 @@
-ENTITY a_mips_tb IS
+ENTITY a_MIPS_tbt IS
 -- Declarations
 
-END a_mips_tb ;
+END a_mips_tbt ;
 
 
 --
@@ -13,7 +13,7 @@ use work.const_package.all;
 use work.cond_comilation_package.all;
 LIBRARY work;
 
-ARCHITECTURE struct OF a_mips_tb IS
+ARCHITECTURE struct OF a_mips_tbt IS
 
    -- Architecture declarations
 
@@ -29,12 +29,12 @@ ARCHITECTURE struct OF a_mips_tb IS
    SIGNAL read_data_2_tb : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
    SIGNAL rst_tb           : STD_LOGIC;
    SIGNAL write_data_tb  : STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 );
-   SIGNAL CLKCNT          : STD_LOGIC_VECTOR(15 DOWNTO 0);
-   SIGNAL STCNT           : STD_LOGIC_VECTOR(7 DOWNTO 0);
-   SIGNAL FHCNT           : STD_LOGIC_VECTOR(7 DOWNTO 0);
-   SIGNAL BPADD           : STD_LOGIC_VECTOR(7 DOWNTO 0);
-   SIGNAL ST_trigger      : STD_LOGIC;
-   SIGNAL ena             : STD_LOGIC;
+   SIGNAL CLKCNT_tb          : STD_LOGIC_VECTOR(15 DOWNTO 0);
+   SIGNAL STCNT_tb           : STD_LOGIC_VECTOR(7 DOWNTO 0);
+   SIGNAL FHCNT_tb           : STD_LOGIC_VECTOR(7 DOWNTO 0);
+   SIGNAL BPADD_tb           : STD_LOGIC_VECTOR(7 DOWNTO 0);
+   SIGNAL STtrigger_tb       : STD_LOGIC;
+   SIGNAL ena_tb             : STD_LOGIC;
    
 
 
@@ -65,7 +65,7 @@ ARCHITECTURE struct OF a_mips_tb IS
 		WBinstruction_o				: OUT  STD_LOGIC_VECTOR(DATA_BUS_WIDTH-1 DOWNTO 0 )
 		);
 	END 	COMPONENT;
-   COMPONENT MIPS_tester
+   COMPONENT MIPS_test_tb
    PORT (
       ALU_res_o  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       Branch_o      : IN     STD_LOGIC ;
@@ -77,17 +77,10 @@ ARCHITECTURE struct OF a_mips_tb IS
       read_data_2_tb : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       write_data_tb  : IN     STD_LOGIC_VECTOR ( DATA_BUS_WIDTH-1 DOWNTO 0 );
       clk_tb           : OUT    STD_LOGIC ;
-      ena             : OUT    STD_LOGIC;
+      ena_tb             : OUT    STD_LOGIC;
       rst_tb           : OUT    STD_LOGIC 
    );
    END COMPONENT;
-
-   -- Optional embedded configurations
-   -- pragma synthesis_off
-   FOR ALL : MIPS USE ENTITY work.mips;
-   FOR ALL : MIPS_tester USE ENTITY work.mips_tester;
-   -- pragma synthesis_on
-
 
 BEGIN
 
@@ -102,15 +95,15 @@ BEGIN
       PORT MAP (
          rst_i           => rst_tb,
          clk_i           => clk_tb,
-         ena             => ena,
+         ena             => ena_tb,
          PC              => pc_o,
-         CLKCNT_o  		    => CLKCNT,
-         STCNT_o 			 => STCNT,
-         FHCNT_o 			 => FHCNT,
-         BPADD 			 => BPADD,
-		 STRIGGER_o        => ST_trigger
+         CLKCNT_o   		    => CLKCNT_tb,
+         STCNT_o 			 => STCNT_tb,
+         FHCNT_o 			 => FHCNT_tb,
+         BPADD 			 => BPADD_tb,
+		 STRIGGER_o        => STtrigger_tb
       );
-   U_1 : MIPS_tester
+   U_1 : MIPS_test_tb
       PORT MAP (
          ALU_res_o  => ALU_res_o,
          Branch_o      => Branch_o,
@@ -122,7 +115,7 @@ BEGIN
          read_data_2_tb => read_data_2_tb,
          write_data_tb  => write_data_tb,
          clk_tb           => clk_tb,
-         ena             => ena,
+         ena_tb             => ena_tb,
          rst_tb           => rst_tb
       );
 
